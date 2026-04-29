@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.env
+venv/
+.venv/
+
+# 数据库（含用户数据，不上传）
+backend/users.db
+*.db
+
+# API 密钥配置（含敏感信息，不上传）
+backend/api_config.py
+
+# 前端构建产物
+frontend/node_modules/
+frontend/dist/
+
+# 系统文件
+.DS_Store
+Thumbs.db

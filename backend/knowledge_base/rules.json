@@ -1,0 +1,504 @@
+{
+  "rules": [
+    {
+      "id": "R1",
+      "name": "发热基础规则",
+      "conditions": ["fever >= 38"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.8,
+      "priority": 1,
+      "description": "体温≥38°C时，可能存在流感"
+    },
+    {
+      "id": "R2",
+      "name": "咳嗽规则",
+      "conditions": ["cough"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.7,
+      "priority": 1,
+      "description": "有咳嗽症状，可能存在流感"
+    },
+    {
+      "id": "R3",
+      "name": "喉咙痛规则",
+      "conditions": ["sore_throat"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.6,
+      "priority": 1,
+      "description": "有喉咙痛症状，可能存在流感"
+    },
+    {
+      "id": "R4",
+      "name": "肌肉疼痛规则",
+      "conditions": ["muscle_pain"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.7,
+      "priority": 1,
+      "description": "有肌肉疼痛，可能存在流感"
+    },
+    {
+      "id": "R5",
+      "name": "头痛规则",
+      "conditions": ["headache"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.6,
+      "priority": 1,
+      "description": "有头痛症状，可能存在流感"
+    },
+    {
+      "id": "R6",
+      "name": "乏力规则",
+      "conditions": ["fatigue"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.7,
+      "priority": 1,
+      "description": "有乏力症状，可能存在流感"
+    },
+    {
+      "id": "R7",
+      "name": "鼻塞规则",
+      "conditions": ["nasal_congestion"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.5,
+      "priority": 1,
+      "description": "有鼻塞症状，可能存在流感"
+    },
+    {
+      "id": "R8",
+      "name": "腹泻规则",
+      "conditions": ["diarrhea"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.4,
+      "priority": 1,
+      "description": "有腹泻症状，可能存在流感"
+    },
+    {
+      "id": "R9",
+      "name": "寒战规则",
+      "conditions": ["chills"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.65,
+      "priority": 1,
+      "description": "有寒战症状，可能存在流感"
+    },
+    {
+      "id": "R10",
+      "name": "呼吸困难规则",
+      "conditions": ["breathing_difficulty"],
+      "conclusion": "severe_flu_possible",
+      "conclusion_text": "可能为重症流感",
+      "confidence": 0.75,
+      "priority": 2,
+      "description": "有呼吸困难，需警惕重症"
+    },
+    {
+      "id": "R11",
+      "name": "流感接触史规则",
+      "conditions": ["contact_history"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.8,
+      "priority": 2,
+      "description": "近期接触过流感患者"
+    },
+    {
+      "id": "R12",
+      "name": "未接种疫苗规则",
+      "conditions": ["no_vaccination"],
+      "conclusion": "flu_risk_increased",
+      "conclusion_text": "流感风险增加",
+      "confidence": 0.6,
+      "priority": 1,
+      "description": "未接种流感疫苗"
+    },
+    {
+      "id": "R13",
+      "name": "急性起病规则",
+      "conditions": ["sudden_onset"],
+      "conclusion": "h1n1_possible",
+      "conclusion_text": "可能患有甲流",
+      "confidence": 0.7,
+      "priority": 2,
+      "description": "症状突然出现，甲流特征"
+    },
+    {
+      "id": "R14",
+      "name": "儿童规则",
+      "conditions": ["age_child"],
+      "conclusion": "flu_risk_high",
+      "conclusion_text": "流感风险较高",
+      "confidence": 0.7,
+      "priority": 1,
+      "description": "儿童是流感高风险人群"
+    },
+    {
+      "id": "R15",
+      "name": "老年人规则",
+      "conditions": ["age_elderly"],
+      "conclusion": "flu_risk_high",
+      "conclusion_text": "流感风险较高",
+      "confidence": 0.7,
+      "priority": 1,
+      "description": "老年人是流感高风险人群"
+    },
+    {
+      "id": "R16",
+      "name": "发热+咳嗽组合",
+      "conditions": ["fever >= 38", "cough"],
+      "conclusion": "flu_likely",
+      "conclusion_text": "较可能为流感",
+      "confidence": 0.85,
+      "priority": 2,
+      "description": "发热且咳嗽，流感可能性较高"
+    },
+    {
+      "id": "R17",
+      "name": "发热+喉咙痛组合",
+      "conditions": ["fever >= 38", "sore_throat"],
+      "conclusion": "flu_likely",
+      "conclusion_text": "较可能为流感",
+      "confidence": 0.8,
+      "priority": 2,
+      "description": "发热伴喉咙痛"
+    },
+    {
+      "id": "R18",
+      "name": "发热+肌肉疼痛组合",
+      "conditions": ["fever >= 38", "muscle_pain"],
+      "conclusion": "flu_likely",
+      "conclusion_text": "较可能为流感",
+      "confidence": 0.85,
+      "priority": 2,
+      "description": "发热伴肌肉疼痛"
+    },
+    {
+      "id": "R19",
+      "name": "发热+乏力组合",
+      "conditions": ["fever >= 38", "fatigue"],
+      "conclusion": "flu_likely",
+      "conclusion_text": "较可能为流感",
+      "confidence": 0.8,
+      "priority": 2,
+      "description": "发热伴乏力"
+    },
+    {
+      "id": "R20",
+      "name": "发热+头痛组合",
+      "conditions": ["fever >= 38", "headache"],
+      "conclusion": "flu_likely",
+      "conclusion_text": "较可能为流感",
+      "confidence": 0.75,
+      "priority": 2,
+      "description": "发热伴头痛"
+    },
+    {
+      "id": "R21",
+      "name": "发热+鼻塞组合",
+      "conditions": ["fever >= 38", "nasal_congestion"],
+      "conclusion": "flu_possible",
+      "conclusion_text": "可能存在流感",
+      "confidence": 0.7,
+      "priority": 1,
+      "description": "发热伴鼻塞"
+    },
+    {
+      "id": "R22",
+      "name": "发热+腹泻组合",
+      "conditions": ["fever >= 38", "diarrhea"],
+      "conclusion": "h1n1_possible",
+      "conclusion_text": "可能患有甲流",
+      "confidence": 0.65,
+      "priority": 2,
+      "description": "发热伴腹泻，需考虑甲流"
+    },
+    {
+      "id": "R23",
+      "name": "发热+寒战组合",
+      "conditions": ["fever >= 38", "chills"],
+      "conclusion": "flu_likely",
+      "conclusion_text": "较可能为流感",
+      "confidence": 0.8,
+      "priority": 2,
+      "description": "发热伴寒战"
+    },
+    {
+      "id": "R24",
+      "name": "发热+呼吸困难危险",
+      "conditions": ["fever >= 38", "breathing_difficulty"],
+      "conclusion": "severe_flu_likely",
+      "conclusion_text": "可能为重症流感",
+      "confidence": 0.9,
+      "priority": 4,
+      "description": "发热伴呼吸困难，需警惕重症"
+    },
+    {
+      "id": "R25",
+      "name": "高热基础规则",
+      "conditions": ["fever >= 39"],
+      "conclusion": "h1n1_possible",
+      "conclusion_text": "可能患有甲流",
+      "confidence": 0.75,
+      "priority": 2,
+      "description": "高热(≥39°C)，甲流特征"
+    },
+    {
+      "id": "R26",
+      "name": "高热+肌肉疼痛组合",
+      "conditions": ["fever >= 39", "muscle_pain"],
+      "conclusion": "h1n1_likely",
+      "conclusion_text": "较可能为甲流",
+      "confidence": 0.9,
+      "priority": 3,
+      "description": "高热伴肌肉疼痛，甲流可能性高"
+    },
+    {
+      "id": "R27",
+      "name": "高热+急性起病组合",
+      "conditions": ["fever >= 39", "sudden_onset"],
+      "conclusion": "h1n1_likely",
+      "conclusion_text": "较可能为甲流",
+      "confidence": 0.88,
+      "priority": 3,
+      "description": "高热伴急性起病"
+    },
+    {
+      "id": "R28",
+      "name": "高热+乏力组合",
+      "conditions": ["fever >= 39", "fatigue"],
+      "conclusion": "h1n1_likely",
+      "conclusion_text": "较可能为甲流",
+      "confidence": 0.85,
+      "priority": 3,
+      "description": "高热伴严重乏力"
+    },
+    {
+      "id": "R29",
+      "name": "三症状组合A",
+      "conditions": ["fever >= 38", "cough", "muscle_pain"],
+      "conclusion": "h1n1_likely",
+      "conclusion_text": "较可能为甲流",
+      "confidence": 0.9,
+      "priority": 3,
+      "description": "发热+咳嗽+肌肉疼痛"
+    },
+    {
+      "id": "R30",
+      "name": "三症状组合B",
+      "conditions": ["fever >= 38", "cough", "fatigue"],
+      "conclusion": "flu_highly_likely",
+      "conclusion_text": "流感可能性很高",
+      "confidence": 0.88,
+      "priority": 3,
+      "description": "发热+咳嗽+乏力"
+    },
+    {
+      "id": "R31",
+      "name": "三症状组合C",
+      "conditions": ["fever >= 38", "headache", "muscle_pain"],
+      "conclusion": "flu_highly_likely",
+      "conclusion_text": "流感可能性很高",
+      "confidence": 0.85,
+      "priority": 3,
+      "description": "发热+头痛+肌肉疼痛"
+    },
+    {
+      "id": "R32",
+      "name": "三症状组合D",
+      "conditions": ["fever >= 38", "sore_throat", "cough"],
+      "conclusion": "flu_highly_likely",
+      "conclusion_text": "流感可能性很高",
+      "confidence": 0.85,
+      "priority": 3,
+      "description": "发热+喉咙痛+咳嗽"
+    },
+    {
+      "id": "R33",
+      "name": "三症状组合E",
+      "conditions": ["fever >= 38", "chills", "muscle_pain"],
+      "conclusion": "h1n1_likely",
+      "conclusion_text": "较可能为甲流",
+      "confidence": 0.88,
+      "priority": 3,
+      "description": "发热+寒战+肌肉疼痛"
+    },
+    {
+      "id": "R34",
+      "name": "甲流典型四症状",
+      "conditions": ["fever >= 39", "cough", "muscle_pain", "fatigue"],
+      "conclusion": "h1n1_highly_likely",
+      "conclusion_text": "甲流可能性很高",
+      "confidence": 0.95,
+      "priority": 4,
+      "description": "高热+咳嗽+肌肉疼痛+乏力，甲流典型"
+    },
+    {
+      "id": "R35",
+      "name": "甲流典型五症状",
+      "conditions": ["fever >= 39", "cough", "muscle_pain", "fatigue", "headache"],
+      "conclusion": "h1n1_confirmed",
+      "conclusion_text": "高度怀疑甲流",
+      "confidence": 0.98,
+      "priority": 5,
+      "description": "五大典型症状齐全"
+    },
+    {
+      "id": "R36",
+      "name": "急性起病三症状",
+      "conditions": ["sudden_onset", "fever >= 38", "muscle_pain"],
+      "conclusion": "h1n1_likely",
+      "conclusion_text": "较可能为甲流",
+      "confidence": 0.92,
+      "priority": 3,
+      "description": "急性起病伴发热和肌肉疼痛"
+    },
+    {
+      "id": "R37",
+      "name": "接触史+发热组合",
+      "conditions": ["contact_history", "fever >= 38"],
+      "conclusion": "flu_highly_likely",
+      "conclusion_text": "流感可能性很高",
+      "confidence": 0.9,
+      "priority": 3,
+      "description": "有接触史且发热"
+    },
+    {
+      "id": "R38",
+      "name": "接触史+多症状",
+      "conditions": ["contact_history", "fever >= 38", "cough"],
+      "conclusion": "h1n1_likely",
+      "conclusion_text": "较可能为甲流",
+      "confidence": 0.92,
+      "priority": 3,
+      "description": "有接触史+发热+咳嗽"
+    },
+    {
+      "id": "R39",
+      "name": "未接种+发热组合",
+      "conditions": ["no_vaccination", "fever >= 38"],
+      "conclusion": "flu_likely",
+      "conclusion_text": "较可能为流感",
+      "confidence": 0.8,
+      "priority": 2,
+      "description": "未接种疫苗且发热"
+    },
+    {
+      "id": "R40",
+      "name": "儿童高热规则",
+      "conditions": ["age_child", "fever >= 39"],
+      "conclusion": "h1n1_risk_high",
+      "conclusion_text": "儿童甲流风险高",
+      "confidence": 0.88,
+      "priority": 3,
+      "description": "儿童高热需特别关注"
+    },
+    {
+      "id": "R41",
+      "name": "儿童+多症状",
+      "conditions": ["age_child", "fever >= 38", "cough"],
+      "conclusion": "h1n1_likely",
+      "conclusion_text": "较可能为甲流",
+      "confidence": 0.85,
+      "priority": 3,
+      "description": "儿童发热咳嗽"
+    },
+    {
+      "id": "R42",
+      "name": "老年人发热规则",
+      "conditions": ["age_elderly", "fever >= 38"],
+      "conclusion": "flu_risk_high",
+      "conclusion_text": "老年人流感风险高",
+      "confidence": 0.85,
+      "priority": 3,
+      "description": "老年人发热需关注并发症"
+    },
+    {
+      "id": "R43",
+      "name": "老年人+呼吸困难",
+      "conditions": ["age_elderly", "breathing_difficulty"],
+      "conclusion": "severe_flu_likely",
+      "conclusion_text": "可能为重症流感",
+      "confidence": 0.92,
+      "priority": 4,
+      "description": "老年人呼吸困难需紧急处理"
+    },
+    {
+      "id": "R44",
+      "name": "重症预警A",
+      "conditions": ["fever >= 39", "breathing_difficulty", "fatigue"],
+      "conclusion": "severe_h1n1",
+      "conclusion_text": "疑似重症甲流",
+      "confidence": 0.95,
+      "priority": 5,
+      "description": "高热+呼吸困难+乏力"
+    },
+    {
+      "id": "R45",
+      "name": "重症预警B",
+      "conditions": ["breathing_difficulty", "chills", "fatigue"],
+      "conclusion": "severe_flu_likely",
+      "conclusion_text": "可能为重症流感",
+      "confidence": 0.9,
+      "priority": 4,
+      "description": "呼吸困难+寒战+乏力"
+    },
+    {
+      "id": "R46",
+      "name": "轻症排除A",
+      "conditions": ["nasal_congestion"],
+      "conclusion": "common_cold_possible",
+      "conclusion_text": "可能为普通感冒",
+      "confidence": 0.5,
+      "priority": 1,
+      "description": "仅有鼻塞，普通感冒可能"
+    },
+    {
+      "id": "R47",
+      "name": "轻症排除B",
+      "conditions": ["sore_throat"],
+      "conclusion": "common_cold_possible",
+      "conclusion_text": "可能为普通感冒",
+      "confidence": 0.5,
+      "priority": 1,
+      "description": "仅有喉咙痛，普通感冒可能"
+    },
+    {
+      "id": "R48",
+      "name": "综合高危规则",
+      "conditions": ["age_child", "fever >= 39", "breathing_difficulty"],
+      "conclusion": "severe_h1n1",
+      "conclusion_text": "疑似重症甲流",
+      "confidence": 0.95,
+      "priority": 5,
+      "description": "儿童高热+呼吸困难"
+    },
+    {
+      "id": "R49",
+      "name": "综合诊断规则A",
+      "conditions": ["fever >= 38", "cough", "muscle_pain", "headache"],
+      "conclusion": "h1n1_highly_likely",
+      "conclusion_text": "甲流可能性很高",
+      "confidence": 0.93,
+      "priority": 4,
+      "description": "四大主要症状"
+    },
+    {
+      "id": "R50",
+      "name": "综合诊断规则B",
+      "conditions": ["sudden_onset", "fever >= 39", "muscle_pain", "fatigue", "cough"],
+      "conclusion": "h1n1_confirmed",
+      "conclusion_text": "高度怀疑甲流",
+      "confidence": 0.98,
+      "priority": 5,
+      "description": "急性起病+高热+五大症状"
+    }
+  ]
+}

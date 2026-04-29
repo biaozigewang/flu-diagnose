@@ -1,0 +1,180 @@
+{
+  "network": {
+    "name": "FluDiagnosisBayesianNetwork",
+    "description": "甲流诊断贝叶斯网络",
+    "nodes": [
+      {
+        "id": "flu",
+        "name": "流感",
+        "type": "disease",
+        "states": ["yes", "no"]
+      },
+      {
+        "id": "h1n1",
+        "name": "甲流",
+        "type": "disease",
+        "states": ["yes", "no"]
+      },
+      {
+        "id": "fever",
+        "name": "发热",
+        "type": "symptom",
+        "states": ["high", "moderate", "low", "none"]
+      },
+      {
+        "id": "cough",
+        "name": "咳嗽",
+        "type": "symptom",
+        "states": ["yes", "no"]
+      },
+      {
+        "id": "muscle_pain",
+        "name": "肌肉疼痛",
+        "type": "symptom",
+        "states": ["yes", "no"]
+      },
+      {
+        "id": "headache",
+        "name": "头痛",
+        "type": "symptom",
+        "states": ["yes", "no"]
+      },
+      {
+        "id": "fatigue",
+        "name": "乏力",
+        "type": "symptom",
+        "states": ["yes", "no"]
+      },
+      {
+        "id": "sore_throat",
+        "name": "喉咙痛",
+        "type": "symptom",
+        "states": ["yes", "no"]
+      }
+    ],
+    "edges": [
+      {"from": "flu", "to": "fever"},
+      {"from": "flu", "to": "cough"},
+      {"from": "flu", "to": "headache"},
+      {"from": "flu", "to": "sore_throat"},
+      {"from": "h1n1", "to": "fever"},
+      {"from": "h1n1", "to": "cough"},
+      {"from": "h1n1", "to": "muscle_pain"},
+      {"from": "h1n1", "to": "fatigue"},
+      {"from": "h1n1", "to": "headache"}
+    ]
+  },
+  "prior_probabilities": {
+    "flu": {
+      "yes": 0.1,
+      "no": 0.9
+    },
+    "h1n1": {
+      "yes": 0.05,
+      "no": 0.95
+    }
+  },
+  "conditional_probability_tables": {
+    "fever_given_h1n1": {
+      "description": "P(发热|甲流)",
+      "h1n1_yes": {
+        "high": 0.7,
+        "moderate": 0.2,
+        "low": 0.08,
+        "none": 0.02
+      },
+      "h1n1_no": {
+        "high": 0.05,
+        "moderate": 0.1,
+        "low": 0.15,
+        "none": 0.7
+      }
+    },
+    "fever_given_flu": {
+      "description": "P(发热|流感)",
+      "flu_yes": {
+        "high": 0.5,
+        "moderate": 0.3,
+        "low": 0.15,
+        "none": 0.05
+      },
+      "flu_no": {
+        "high": 0.02,
+        "moderate": 0.08,
+        "low": 0.15,
+        "none": 0.75
+      }
+    },
+    "cough_given_h1n1": {
+      "description": "P(咳嗽|甲流)",
+      "h1n1_yes": {
+        "yes": 0.85,
+        "no": 0.15
+      },
+      "h1n1_no": {
+        "yes": 0.2,
+        "no": 0.8
+      }
+    },
+    "cough_given_flu": {
+      "description": "P(咳嗽|流感)",
+      "flu_yes": {
+        "yes": 0.8,
+        "no": 0.2
+      },
+      "flu_no": {
+        "yes": 0.15,
+        "no": 0.85
+      }
+    },
+    "muscle_pain_given_h1n1": {
+      "description": "P(肌肉疼痛|甲流)",
+      "h1n1_yes": {
+        "yes": 0.9,
+        "no": 0.1
+      },
+      "h1n1_no": {
+        "yes": 0.1,
+        "no": 0.9
+      }
+    },
+    "headache_given_h1n1": {
+      "description": "P(头痛|甲流)",
+      "h1n1_yes": {
+        "yes": 0.8,
+        "no": 0.2
+      },
+      "h1n1_no": {
+        "yes": 0.15,
+        "no": 0.85
+      }
+    },
+    "fatigue_given_h1n1": {
+      "description": "P(乏力|甲流)",
+      "h1n1_yes": {
+        "yes": 0.85,
+        "no": 0.15
+      },
+      "h1n1_no": {
+        "yes": 0.2,
+        "no": 0.8
+      }
+    },
+    "sore_throat_given_flu": {
+      "description": "P(喉咙痛|流感)",
+      "flu_yes": {
+        "yes": 0.65,
+        "no": 0.35
+      },
+      "flu_no": {
+        "yes": 0.1,
+        "no": 0.9
+      }
+    }
+  }
+}
+
+
+
+
+

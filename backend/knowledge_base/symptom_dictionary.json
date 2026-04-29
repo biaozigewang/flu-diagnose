@@ -1,0 +1,139 @@
+{
+  "symptoms": {
+    "fever": {
+      "name": "发热",
+      "english": "fever",
+      "synonyms": ["发烧", "体温高", "发热", "高烧", "低烧", "高热"],
+      "type": "numeric",
+      "unit": "°C",
+      "normal_range": [36.0, 37.3],
+      "thresholds": {
+        "low_fever": [37.3, 38.0],
+        "moderate_fever": [38.0, 39.0],
+        "high_fever": [39.0, 41.0]
+      },
+      "question": "您的体温是多少度？"
+    },
+    "cough": {
+      "name": "咳嗽",
+      "english": "cough",
+      "synonyms": ["咳嗽", "干咳", "咳痰", "咳", "剧烈咳嗽"],
+      "type": "boolean",
+      "severity_words": {
+        "mild": ["轻微", "有点", "偶尔", "少许"],
+        "moderate": ["一般", "中等"],
+        "severe": ["剧烈", "严重", "频繁", "不停"]
+      },
+      "question": "您是否有咳嗽症状？"
+    },
+    "muscle_pain": {
+      "name": "肌肉疼痛",
+      "english": "muscle_pain",
+      "synonyms": ["肌肉酸痛", "肌肉疼", "全身酸痛", "浑身疼", "身体疼", "四肢酸痛", "酸痛"],
+      "type": "boolean",
+      "question": "您是否有肌肉酸痛的感觉？"
+    },
+    "headache": {
+      "name": "头痛",
+      "english": "headache",
+      "synonyms": ["头疼", "头痛", "脑袋疼", "头胀"],
+      "type": "boolean",
+      "question": "您是否有头痛症状？"
+    },
+    "fatigue": {
+      "name": "乏力",
+      "english": "fatigue",
+      "synonyms": ["乏力", "疲劳", "没力气", "虚弱", "疲惫", "无力", "累"],
+      "type": "boolean",
+      "question": "您是否感到乏力或疲劳？"
+    },
+    "sore_throat": {
+      "name": "喉咙痛",
+      "english": "sore_throat",
+      "synonyms": ["喉咙痛", "嗓子疼", "咽喉痛", "嗓子痛", "喉咙疼"],
+      "type": "boolean",
+      "question": "您是否有喉咙痛的症状？"
+    },
+    "nasal_congestion": {
+      "name": "鼻塞",
+      "english": "nasal_congestion",
+      "synonyms": ["鼻塞", "鼻子不通", "鼻子堵", "流鼻涕", "鼻涕"],
+      "type": "boolean",
+      "question": "您是否有鼻塞或流鼻涕？"
+    },
+    "diarrhea": {
+      "name": "腹泻",
+      "english": "diarrhea",
+      "synonyms": ["腹泻", "拉肚子", "拉稀", "肠胃不适"],
+      "type": "boolean",
+      "question": "您是否有腹泻症状？"
+    },
+    "breathing_difficulty": {
+      "name": "呼吸困难",
+      "english": "breathing_difficulty",
+      "synonyms": ["呼吸困难", "喘不上气", "气短", "胸闷", "呼吸急促"],
+      "type": "boolean",
+      "is_danger_sign": true,
+      "question": "您是否有呼吸困难或气短？"
+    },
+    "chills": {
+      "name": "寒战",
+      "english": "chills",
+      "synonyms": ["寒战", "发冷", "怕冷", "打寒颤", "冷"],
+      "type": "boolean",
+      "question": "您是否感到发冷或寒战？"
+    },
+    "sneezing": {
+      "name": "打喷嚏",
+      "english": "sneezing",
+      "synonyms": ["打喷嚏", "喷嚏", "连续打喷嚏"],
+      "type": "boolean",
+      "question": "您是否频繁打喷嚏？"
+    },
+    "loss_of_appetite": {
+      "name": "食欲不振",
+      "english": "loss_of_appetite",
+      "synonyms": ["食欲不振", "不想吃饭", "没胃口", "吃不下"],
+      "type": "boolean",
+      "question": "您是否有食欲不振？"
+    }
+  },
+  "risk_factors": {
+    "contact_history": {
+      "name": "接触史",
+      "synonyms": ["接触过", "接触了", "身边有人"],
+      "question": "您近期是否接触过流感患者？"
+    },
+    "no_vaccination": {
+      "name": "未接种疫苗",
+      "synonyms": ["没打疫苗", "未接种", "没有接种"],
+      "question": "您今年是否接种了流感疫苗？"
+    },
+    "age_child": {
+      "name": "儿童",
+      "age_range": [0, 14],
+      "question": "患者年龄是多少？"
+    },
+    "age_elderly": {
+      "name": "老年人",
+      "age_range": [65, 150],
+      "question": "患者年龄是多少？"
+    },
+    "sudden_onset": {
+      "name": "急性起病",
+      "synonyms": ["突然", "急性", "骤然", "一下子"],
+      "question": "症状是否突然出现？"
+    }
+  },
+  "negation_words": ["不", "没", "没有", "无", "否", "不是", "未", "别", "非"],
+  "degree_words": {
+    "mild": ["轻微", "有点", "稍微", "一点", "略微"],
+    "moderate": ["一般", "中等", "比较"],
+    "severe": ["很", "非常", "特别", "剧烈", "严重", "极其"]
+  }
+}
+
+
+
+
+

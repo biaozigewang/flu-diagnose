@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #0284c7;
+  --color-primary-light: #38bdf8;
+  --color-primary-dark: #075985;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans SC', 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdfa 100%);
+  min-height: 100vh;
+  color: #1e293b;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* 动画类 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* 消息气泡样式 */
+.message-bubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  line-height: 1.6;
+}
+
+.message-user {
+  background: linear-gradient(135deg, #0284c7, #0ea5e9);
+  color: white;
+  border-bottom-right-radius: 4px;
+  margin-left: auto;
+}
+
+.message-assistant {
+  background: white;
+  color: #334155;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 输入框样式 */
+.input-field {
+  @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white
+         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+         transition-all duration-200;
+}
+
+/* 按钮样式 */
+.btn-primary {
+  @apply px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-500 
+         text-white font-medium rounded-xl
+         hover:from-primary-700 hover:to-primary-600
+         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+         transition-all duration-200 transform hover:scale-[1.02]
+         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 bg-white text-primary-600 font-medium rounded-xl
+         border-2 border-primary-200
+         hover:bg-primary-50 hover:border-primary-300
+         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+         transition-all duration-200;
+}
+
+/* 卡片样式 */
+.card {
+  @apply bg-white rounded-2xl shadow-lg shadow-slate-200/50 p-6;
+}
+
+/* 风险等级颜色 */
+.risk-high {
+  @apply text-red-600 bg-red-50 border-red-200;
+}
+
+.risk-moderate {
+  @apply text-amber-600 bg-amber-50 border-amber-200;
+}
+
+.risk-low {
+  @apply text-green-600 bg-green-50 border-green-200;
+}
+
+/* 置信度条 */
+.confidence-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.confidence-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease-out;
+}
+
+/* 症状标签 */
+.symptom-tag {
+  @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium
+         transition-all duration-200 cursor-pointer;
+}
+
+.symptom-tag-active {
+  @apply bg-primary-100 text-primary-700 border border-primary-300;
+}
+
+.symptom-tag-inactive {
+  @apply bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200;
+}
+
+.symptom-tag-negated {
+  @apply bg-red-50 text-red-600 border border-red-200;
+}
+
+
+
+
+
+
