@@ -585,7 +585,7 @@ function HomePage() {
       {/* Footer */}
       <footer className="py-8 bg-slate-800 text-slate-400">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-sm">© 2026 流感哨兵 · 甲流智能自检系统 · 结果仅供参考，不替代医生诊断</p>
+          <p className="text-sm">© 2026 哨兵 · 流感辅助诊断</p>
         </div>
       </footer>
     </div>
