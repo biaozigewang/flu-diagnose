@@ -35,14 +35,14 @@ function Header() {
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center space-x-1">
+          <nav className="flex items-center space-x-0.5">
             {navItems.map(({ path, label, icon: Icon }) => {
               const isActive = location.pathname === path
               return (
                 <Link
                   key={path}
                   to={path}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center space-x-1 px-2 sm:px-4 py-2 rounded-lg transition-all duration-200 ${
                     isActive
                       ? 'bg-primary-50 text-primary-600 font-medium'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
@@ -55,15 +55,15 @@ function Header() {
             })}
 
             {/* 用户信息 + 退出 */}
-            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200">
-              <div className="flex items-center gap-1.5 text-sm text-slate-600">
+            <div className="flex items-center gap-1 ml-1 pl-1.5 border-l border-slate-200">
+              <div className="hidden sm:flex items-center gap-1.5 text-sm text-slate-600">
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">{username}</span>
+                <span>{username}</span>
               </div>
               <button
                 onClick={handleLogout}
                 title="退出登录"
-                className="flex items-center gap-1 px-3 py-2 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors text-sm"
+                className="flex items-center gap-1 px-2 sm:px-3 py-2 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors text-sm"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">退出</span>
