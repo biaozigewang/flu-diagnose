@@ -18,6 +18,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart
 } from 'recharts'
+import { diagnosisService } from '../../services/api'
 
 function SmartQuestionnaire({ onComplete, onCancel }) {
   const [currentQuestion, setCurrentQuestion] = useState(null)
@@ -40,12 +41,7 @@ function SmartQuestionnaire({ onComplete, onCancel }) {
   const fetchNextQuestion = async (currentSymptoms) => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/diagnose/step', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ current_symptoms: currentSymptoms })
-      })
-      const data = await response.json()
+      const data = await diagnosisService.diagnoseStep(currentSymptoms)
       
       if (data.success) {
         if (data.complete) {
@@ -82,12 +78,7 @@ function SmartQuestionnaire({ onComplete, onCancel }) {
   // 执行最终诊断
   const executeDiagnosis = async (symptoms) => {
     try {
-      const response = await fetch('/api/diagnose', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symptoms })
-      })
-      const data = await response.json()
+      const data = await diagnosisService.diagnose(symptoms)
       
       if (data.success && onComplete) {
         onComplete({

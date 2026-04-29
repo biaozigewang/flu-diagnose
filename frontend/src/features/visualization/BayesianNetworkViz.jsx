@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { diagnosisService } from '../../services/api'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   X, 
@@ -119,12 +120,7 @@ function BayesianNetworkViz({ onClose, symptoms = {} }) {
   const fetchPosteriors = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/diagnose', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symptoms })
-      })
-      const data = await response.json()
+      const data = await diagnosisService.diagnose(symptoms)
       if (data.success) {
         setPosteriors(data.result)
       }
