@@ -400,16 +400,35 @@ def analyze_throat_image():
             'temperature': 0.1
         }
 
-        response = http_requests.post(
-            f'{VISION_API_BASE}/chat/completions',
-            headers=headers,
-            json=payload,
-            timeout=120
-        )
+        # 调用 Vision API，遇到 5xx（上游 Cloudflare/服务异常）自动重试
+        import time
+        response = None
+        last_err = ''
+        for attempt in range(3):
+            try:
+                response = http_requests.post(
+                    f'{VISION_API_BASE}/chat/completions',
+                    headers=headers,
+                    json=payload,
+                    timeout=120
+                )
+                if response.status_code == 200:
+                    break
+                last_err = f'HTTP {response.status_code}'
+                # 4xx 客户端错误不重试，直接失败
+                if 400 <= response.status_code < 500:
+                    logger.error('Vision API 客户端错误: %d %s', response.status_code, response.text[:300])
+                    return jsonify({'success': False, 'error': f'图像分析失败：{response.status_code}'}), 500
+                logger.warning('Vision API 第%d次失败: %d，%ds 后重试', attempt + 1, response.status_code, 2 * (attempt + 1))
+            except Exception as e:
+                last_err = str(e)
+                logger.warning('Vision API 第%d次异常: %s', attempt + 1, e)
+            if attempt < 2:
+                time.sleep(2 * (attempt + 1))
 
-        if response.status_code != 200:
-            logger.error('Vision API 错误: %d %s', response.status_code, response.text)
-            return jsonify({'success': False, 'error': f'视觉模型调用失败: {response.status_code}'}), 500
+        if response is None or response.status_code != 200:
+            logger.error('Vision API 多次重试后仍失败: %s', last_err)
+            return jsonify({'success': False, 'error': '视觉服务暂时不可用，请稍后重试'}), 503
 
         content = response.json()['choices'][0]['message']['content']
 
