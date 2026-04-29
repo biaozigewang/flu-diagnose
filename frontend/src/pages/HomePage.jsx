@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -23,7 +23,9 @@ import {
   TrendingUp,
   AlertCircle,
   MapPin,
-  Pill
+  Pill,
+  Mic,
+  MicOff
 } from 'lucide-react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -96,10 +98,36 @@ function TypingDemo() {
   const [charIdx, setCharIdx] = useState(0)
   const [done, setDone] = useState(false)
   const [userInput, setUserInput] = useState('')
+  const [isListening, setIsListening] = useState(false)
+  const [speechSupported] = useState(() => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+  const recognitionRef = useRef(null)
 
   const handleSubmit = () => {
-    if (userInput.trim()) navigate('/diagnosis', { state: { initialInput: userInput.trim() } })
+    if (userInput.trim()) navigate('/diagnosis', { state: { initialInput: userInput.trim(), autoSubmit: true } })
   }
+
+  const startListening = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) return
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'zh-CN'
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.onstart = () => setIsListening(true)
+    recognition.onend = () => setIsListening(false)
+    recognition.onerror = () => setIsListening(false)
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript
+      setUserInput(prev => prev ? `${prev}，${transcript}` : transcript)
+    }
+    recognitionRef.current = recognition
+    recognition.start()
+  }, [])
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop()
+    setIsListening(false)
+  }, [])
 
   useEffect(() => {
     if (done) {
@@ -157,6 +185,18 @@ function TypingDemo() {
             placeholder="描述您的症状，按 Enter 开始诊断..."
             className="text-xs text-slate-700 flex-1 bg-transparent outline-none placeholder:text-slate-400"
           />
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={isListening ? stopListening : startListening}
+              title={isListening ? '停止录音' : '语音输入'}
+              className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
+                isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-200 hover:bg-slate-300'
+              }`}
+            >
+              {isListening ? <MicOff className="w-3 h-3 text-white" /> : <Mic className="w-3 h-3 text-slate-500" />}
+            </button>
+          )}
           <button
             onClick={handleSubmit}
             className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center hover:bg-primary-600 transition-colors"
@@ -164,6 +204,12 @@ function TypingDemo() {
             <ArrowRight className="w-3 h-3 text-white" />
           </button>
         </div>
+        {isListening && (
+          <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse inline-block" />
+            正在录音，请说出您的症状...
+          </p>
+        )}
       </div>
     </div>
   )

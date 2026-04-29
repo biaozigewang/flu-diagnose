@@ -82,7 +82,7 @@ body {
 
 /* 消息气泡样式 */
 .message-bubble {
-  max-width: 80%;
+  max-width: 100%;
   padding: 12px 16px;
   border-radius: 16px;
   line-height: 1.6;

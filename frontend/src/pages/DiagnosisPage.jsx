@@ -24,7 +24,9 @@ import {
   GitCompare,
   SlidersHorizontal,
   UserCheck,
-  Heart
+  Heart,
+  Maximize2,
+  Minimize2
 } from 'lucide-react'
 import DiagnosisResult from '../features/diagnosis/DiagnosisResult'
 import RuleVisualization from '../features/visualization/RuleVisualization'
@@ -78,7 +80,9 @@ function SymptomsResultPanel({ currentSymptoms, diagnosisResult, symptomNameMap 
       {activeTab === 'symptoms' && (
         Object.keys(currentSymptoms).length > 0 ? (
           <div className="flex-1 overflow-y-auto space-y-1">
-            {Object.entries(currentSymptoms).map(([key, value]) => (
+            {Object.entries(currentSymptoms)
+              .filter(([key]) => !key.startsWith('_') && !(key in { contact_history:1, no_vaccination:1, chronic_disease:1, age_elderly:1, age_child:1 }))
+              .map(([key, value]) => (
               <div key={key} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
                 <span className="text-slate-600 text-sm">{symptomNameMap[key] || key}</span>
                 <span className={`text-sm font-medium ${value ? 'text-red-500' : 'text-green-500'}`}>
@@ -177,6 +181,16 @@ function DiagnosisPage() {
 
   const [thinkingStep, setThinkingStep] = useState('')
 
+  // 首页带 autoSubmit 跳转时自动触发发送
+  useEffect(() => {
+    if (location.state?.autoSubmit && location.state?.initialInput) {
+      const timer = setTimeout(() => {
+        handleSubmit({ preventDefault: () => {} })
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // 同步到 sessionStorage
   useEffect(() => {
     try { sessionStorage.setItem('diagnosis_messages', JSON.stringify(messages)) } catch {}
@@ -195,6 +209,13 @@ function DiagnosisPage() {
   
   const [isListening, setIsListening] = useState(false)
   const [speechSupported] = useState(() => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+  const [isChatFullscreen, setIsChatFullscreen] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setIsChatFullscreen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // 新增：严重程度、风险因素、鉴别诊断弹窗
   const [severity, setSeverity] = useState(1) // 0=轻 1=中 2=重
@@ -658,8 +679,32 @@ function DiagnosisPage() {
           </div>
 
           {/* 聊天区域 - 占 2/4 */}
-          <div className="lg:col-span-2">
-            <div className="card flex flex-col" style={{ height: 600, minHeight: 400, maxHeight: 900, resize: 'vertical', overflow: 'hidden' }}>            {/* 聊天头部 */}
+          <div
+            className={isChatFullscreen ? 'fixed inset-0 z-50 p-4' : 'lg:col-span-2'}
+            onClick={isChatFullscreen ? () => setIsChatFullscreen(false) : undefined}
+          >
+            {/* 全屏背景遮罩 */}
+            <AnimatePresence>
+              {isChatFullscreen && (
+                <motion.div
+                  className="fixed inset-0 -z-[1] bg-black/30 backdrop-blur-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                />
+              )}
+            </AnimatePresence>
+            <motion.div
+              key={String(isChatFullscreen)}
+              className={`card flex flex-col ${isChatFullscreen ? 'h-full' : ''}`}
+              style={isChatFullscreen ? {} : { height: 600 }}
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            >
+            {/* 聊天头部 */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-full flex items-center justify-center">
@@ -670,13 +715,22 @@ function DiagnosisPage() {
                   <p className="text-xs text-slate-400">甲流智能自检助手</p>
                 </div>
               </div>
-              <button
-                onClick={handleReset}
-                className="flex items-center space-x-1 text-sm text-slate-500 hover:text-primary-600 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>重新开始</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleReset}
+                  className="flex items-center space-x-1 text-sm text-slate-500 hover:text-primary-600 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>重新开始</span>
+                </button>
+                <button
+                  onClick={() => setIsChatFullscreen(v => !v)}
+                  title={isChatFullscreen ? '退出全屏' : '全屏展开'}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                >
+                  {isChatFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {/* 消息列表 */}
@@ -690,7 +744,7 @@ function DiagnosisPage() {
                     exit={{ opacity: 0 }}
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`flex items-start space-x-2 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                    <div className={`flex items-start space-x-2 w-[85%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                         message.role === 'user'
                           ? 'bg-primary-100 text-primary-600'
@@ -957,7 +1011,7 @@ function DiagnosisPage() {
                 ))}
               </div>
             </div>
-          </div>
+            </motion.div>
           </div>
 
           {/* 已识别症状 + 自检结果 Tab 面板 - 占 1/4 */}

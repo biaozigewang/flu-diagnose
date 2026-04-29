@@ -1,14 +1,16 @@
 import axios from 'axios'
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: BASE_URL,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' }
 })
 
 // 图片分析用单独实例，超时更长
 const apiVision = axios.create({
-  baseURL: '/api',
+  baseURL: BASE_URL,
   timeout: 120000,
   headers: { 'Content-Type': 'application/json' }
 })
