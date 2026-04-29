@@ -22,40 +22,40 @@ function Header() {
   return (
     <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50" style={{ paddingTop: 'max(env(safe-area-inset-top), 0px)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-12 sm:h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/30">
-              <Activity className="w-6 h-6 text-white" />
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/30">
+              <Activity className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-800">流感哨兵</h1>
-              <p className="text-xs text-slate-500">甲流智能自检</p>
+              <h1 className="text-base sm:text-lg font-bold text-slate-800">流感哨兵</h1>
+              <p className="text-xs text-slate-500 hidden sm:block">甲流智能自检</p>
             </div>
           </Link>
 
           {/* Navigation */}
-          <nav className="flex items-center space-x-0.5">
+          <nav className="flex items-center space-x-0">
             {navItems.map(({ path, label, icon: Icon }) => {
               const isActive = location.pathname === path
               return (
                 <Link
                   key={path}
                   to={path}
-                  className={`flex items-center space-x-1 px-2 sm:px-4 py-2 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center space-x-1 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all duration-200 ${
                     isActive
                       ? 'bg-primary-50 text-primary-600 font-medium'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{label}</span>
+                  <span className="hidden sm:inline text-sm">{label}</span>
                 </Link>
               )
             })}
 
             {/* 用户信息 + 退出 */}
-            <div className="flex items-center gap-1 ml-1 pl-1.5 border-l border-slate-200">
+            <div className="flex items-center gap-0.5 ml-0.5 pl-1 border-l border-slate-200">
               <div className="hidden sm:flex items-center gap-1.5 text-sm text-slate-600">
                 <User className="w-4 h-4" />
                 <span>{username}</span>
@@ -63,7 +63,7 @@ function Header() {
               <button
                 onClick={handleLogout}
                 title="退出登录"
-                className="flex items-center gap-1 px-2 sm:px-3 py-2 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors text-sm"
+                className="flex items-center gap-1 px-1.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors text-sm"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">退出</span>
