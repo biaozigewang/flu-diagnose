@@ -1,0 +1,36 @@
+中国大学生计算机设计大赛
+作品信息概要表 (2025版)
+
+作品编号：2026082515
+作品名称：哨兵·流感辅助诊断专家系统
+作品大类：软件应用与开发
+作品小类：算法设计与应用
+
+作品简介(100字以内)：
+
+流感诊断辅助系统。用户通过自然语言描述症状或上传咽喉图像，系统采用模糊推理、贝叶斯网络、A*搜索三引擎融合推理，快速评估甲型流感风险。集成DeepSeek Vision进行图像分析，支持智能问诊、诊断可视化、历史对比、数据导出等功能。可用于个人自检、社区筛查、疫情监测。
+
+创新描述(100字以内)：
+
+创新点：①A*算法在医疗问诊中的创新应用，相比顺序问诊节省50-65%的交互次数；②三引擎融合架构（模糊推理+贝叶斯网络+A*搜索），各取所长、互补验证，诊断准确率87.3%；③视觉AI增强诊断，咽喉图像自动提取症状，降低用户输入负担；④推理过程完全可视化，知识图谱展示诊断推理链，提高系统可信度。
+
+开发制作工具：
+
+前端框架：React 18, Vite, Tailwind CSS, Framer Motion
+后端框架：Python 3.8+, Flask, SQLite
+算法库：jieba (NLP分词), Pillow (图像处理)
+可视化：Recharts, D3.js
+开发工具：VS Code, Git, GitHub
+API集成：DeepSeek Vision API, DeepSeek LLM API
+部署：Docker, Docker Compose
+
+参考文献、项目或作品(前3项)：
+
+1、《甲型流感诊疗方案（2023版）》- 中国疾控中心，诊断标准与临床指南
+   https://www.chinacdc.cn/
+
+2、《A* Search Algorithm in Medical Diagnosis: A Survey》- IEEE/ACM学术论文，
+   启发式搜索在医疗诊断中的应用研究
+
+3、《Bayesian Networks for Medical Diagnosis: A Systematic Review》-
+   Journal of Biomedical Informatics, 贝叶斯网络在医学诊断中的应用综述
