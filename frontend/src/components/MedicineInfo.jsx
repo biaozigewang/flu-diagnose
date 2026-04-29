@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Pill, Thermometer, AlertTriangle, ChevronDown, ChevronUp, Info } from 'lucide-react'
 
@@ -109,7 +110,7 @@ function MedicineCard({ med }) {
 }
 
 export default function MedicineInfo({ onClose }) {
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
@@ -149,6 +150,7 @@ export default function MedicineInfo({ onClose }) {
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
