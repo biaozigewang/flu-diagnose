@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Brain, 
-  ChevronRight, 
-  CheckCircle2, 
+import {
+  Brain,
+  ChevronRight,
+  CheckCircle2,
   XCircle,
   Thermometer,
   Target,
   Zap,
   ArrowRight,
   RotateCcw,
-  Activity
+  Activity,
+  TrendingUp,
+  Award
 } from 'lucide-react'
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart
+} from 'recharts'
 
 function SmartQuestionnaire({ onComplete, onCancel }) {
   const [currentQuestion, setCurrentQuestion] = useState(null)
@@ -22,6 +28,8 @@ function SmartQuestionnaire({ onComplete, onCancel }) {
   const [isComplete, setIsComplete] = useState(false)
   const [questionHistory, setQuestionHistory] = useState([])
   const [temperatureInput, setTemperatureInput] = useState('')
+  // 置信度爬升数据（用于折线图）
+  const [confidenceCurve, setConfidenceCurve] = useState([{ q: '开始', conf: 0 }])
 
   // 启动智能问诊
   useEffect(() => {
@@ -41,9 +49,15 @@ function SmartQuestionnaire({ onComplete, onCancel }) {
       
       if (data.success) {
         if (data.complete) {
-          // 诊断完成
+          // 诊断完成，记录最终置信度点
+          const finalConf = data.confidence || data.current_confidence || 0
+          setConfidenceCurve(prev => [...prev, {
+            q: '完成',
+            conf: parseFloat((finalConf * 100).toFixed(1)),
+            label: '达到目标'
+          }])
           setIsComplete(true)
-          setConfidence(data.confidence || data.current_confidence)
+          setConfidence(finalConf)
           // 执行完整诊断
           executeDiagnosis(currentSymptoms)
         } else {
@@ -51,8 +65,8 @@ function SmartQuestionnaire({ onComplete, onCancel }) {
             symptom: data.next_symptom,
             question: data.question,
             expectedGain: data.expected_gain,
-            probability: data.probability,  // 条件概率
-            reason: data.reason,  // 选择原因
+            probability: data.probability,
+            reason: data.reason,
             alternatives: data.alternatives
           })
           setConfidence(data.current_confidence || 0)
@@ -91,28 +105,36 @@ function SmartQuestionnaire({ onComplete, onCancel }) {
   const handleAnswer = async (answer) => {
     const symptom = currentQuestion.symptom
     let value = answer
-    
+
     // 如果是体温问题，使用输入的数值
     if (symptom === 'fever' && answer === true) {
       value = parseFloat(temperatureInput) || 38.5
     }
-    
+
     // 记录回答
     const newAnswers = { ...answers, [symptom]: value }
     setAnswers(newAnswers)
-    
+
     // 记录问题历史
+    const newStep = step + 1
     setQuestionHistory(prev => [...prev, {
-      step: step + 1,
+      step: newStep,
       symptom,
       question: currentQuestion.question,
       answer: value,
       confidence
     }])
-    
-    setStep(s => s + 1)
+
+    // 更新置信度爬升曲线
+    setConfidenceCurve(prev => [...prev, {
+      q: `Q${newStep}`,
+      conf: parseFloat((confidence * 100).toFixed(1)),
+      label: symptomNames[symptom] || symptom
+    }])
+
+    setStep(newStep)
     setTemperatureInput('')
-    
+
     // 获取下一个问题
     await fetchNextQuestion(newAnswers)
   }
@@ -125,6 +147,7 @@ function SmartQuestionnaire({ onComplete, onCancel }) {
     setIsComplete(false)
     setQuestionHistory([])
     setCurrentQuestion(null)
+    setConfidenceCurve([{ q: '开始', conf: 0 }])
     fetchNextQuestion({})
   }
 
@@ -201,18 +224,72 @@ function SmartQuestionnaire({ onComplete, onCancel }) {
           </div>
         ) : isComplete ? (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-8"
+            className="space-y-5"
           >
-            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+            {/* 完成标题 */}
+            <div className="text-center py-4">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Award className="w-8 h-8 text-emerald-500" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-1">问诊完成</h3>
+              <p className="text-slate-500 text-sm">
+                A* 算法仅用 <span className="font-bold text-violet-600">{step} 个问题</span> 完成症状评估
+              </p>
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">问诊完成！</h3>
-            <p className="text-slate-500 mb-4">
-              仅用 <span className="font-bold text-violet-600">{step}</span> 个问题完成症状评估
-            </p>
-            <p className="text-sm text-slate-400">正在生成自检报告...</p>
+
+            {/* 效率对比卡片 */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-violet-50 rounded-xl p-3 text-center border border-violet-100">
+                <p className="text-2xl font-bold text-violet-600">{step}</p>
+                <p className="text-xs text-slate-500 mt-0.5">A* 问题数</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-200">
+                <p className="text-2xl font-bold text-slate-400">12</p>
+                <p className="text-xs text-slate-500 mt-0.5">顺序问诊</p>
+              </div>
+              <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-100">
+                <p className="text-2xl font-bold text-emerald-600">
+                  {Math.round((1 - step / 12) * 100)}%
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">效率提升</p>
+              </div>
+            </div>
+
+            {/* 置信度爬升折线图 */}
+            {confidenceCurve.length > 1 && (
+              <div className="bg-white rounded-xl border border-slate-100 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="w-4 h-4 text-violet-500" />
+                  <span className="text-sm font-medium text-slate-700">置信度爬升路径</span>
+                  <span className="ml-auto text-xs text-slate-400">每答一题，置信度跳升</span>
+                </div>
+                <ResponsiveContainer width="100%" height={140}>
+                  <AreaChart data={confidenceCurve} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="confGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="q" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={v => `${v}%`} />
+                    <Tooltip
+                      formatter={(v, _, props) => [`${v}%`, props.payload?.label || '置信度']}
+                      contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e2e8f0' }}
+                    />
+                    <ReferenceLine y={85} stroke="#10b981" strokeDasharray="4 4"
+                      label={{ value: '目标 85%', fontSize: 9, fill: '#10b981', position: 'right' }} />
+                    <Area type="monotone" dataKey="conf" stroke="#8b5cf6" strokeWidth={2}
+                      fill="url(#confGrad)" dot={{ fill: '#8b5cf6', r: 3 }} activeDot={{ r: 5 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            <p className="text-xs text-slate-400 text-center">正在生成自检报告...</p>
           </motion.div>
         ) : currentQuestion ? (
           <motion.div

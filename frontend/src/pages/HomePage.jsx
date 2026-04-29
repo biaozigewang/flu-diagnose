@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -30,6 +30,7 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts'
 import MedicineInfo from '../components/MedicineInfo'
+import FluMapChart from '../components/FluMapChart'
 
 // 流感流行趋势数据（基于中国疾控中心2025-2026流感季公开周报）
 const fluTrendData = [
@@ -79,6 +80,78 @@ const fluStats = [
     icon: Activity,
   },
 ]
+
+// 打字机演示组件
+const DEMO_STEPS = [
+  { type: 'input',  text: '我发烧39度，浑身肌肉酸痛，头很疼，乏力...' },
+  { type: 'think',  text: '🔍 NLP 分析中：识别到发热(39°C)、肌肉酸痛、头痛、乏力' },
+  { type: 'think',  text: '🧠 模糊推理：触发规则 R26(高热+肌肉疼痛)、R28(高热+乏力)...' },
+  { type: 'result', text: '⚠️ 较可能为甲流，置信度 87.3%，建议48小时内就医' },
+]
+
+function TypingDemo() {
+  const [step, setStep] = useState(0)
+  const [displayed, setDisplayed] = useState('')
+  const [charIdx, setCharIdx] = useState(0)
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    if (done) {
+      const t = setTimeout(() => { setStep(0); setDisplayed(''); setCharIdx(0); setDone(false) }, 3000)
+      return () => clearTimeout(t)
+    }
+    const current = DEMO_STEPS[step]
+    if (!current) { setDone(true); return }
+    if (charIdx < current.text.length) {
+      const t = setTimeout(() => {
+        setDisplayed(prev => prev + current.text[charIdx])
+        setCharIdx(i => i + 1)
+      }, current.type === 'input' ? 60 : 20)
+      return () => clearTimeout(t)
+    } else {
+      const t = setTimeout(() => {
+        setStep(s => s + 1)
+        setDisplayed('')
+        setCharIdx(0)
+      }, 800)
+      return () => clearTimeout(t)
+    }
+  }, [step, charIdx, done])
+
+  const colors = { input: 'text-slate-700', think: 'text-indigo-600', result: 'text-red-600 font-semibold' }
+
+  return (
+    <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+      {/* 窗口标题栏 */}
+      <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border-b border-slate-200">
+        <div className="w-3 h-3 rounded-full bg-red-400" />
+        <div className="w-3 h-3 rounded-full bg-amber-400" />
+        <div className="w-3 h-3 rounded-full bg-green-400" />
+        <span className="ml-2 text-xs text-slate-400">流感哨兵 · 智能自检</span>
+      </div>
+      {/* 演示内容 */}
+      <div className="p-5 space-y-3 min-h-[200px]">
+        {DEMO_STEPS.slice(0, step).map((s, i) => (
+          <div key={i} className={`text-sm ${colors[s.type]}`}>{s.text}</div>
+        ))}
+        {!done && step < DEMO_STEPS.length && (
+          <div className={`text-sm ${colors[DEMO_STEPS[step].type]}`}>
+            {displayed}<span className="animate-pulse">|</span>
+          </div>
+        )}
+      </div>
+      {/* 输入框模拟 */}
+      <div className="px-5 pb-5">
+        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
+          <span className="text-xs text-slate-400 flex-1">描述您的症状...</span>
+          <div className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center">
+            <ArrowRight className="w-3 h-3 text-white" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const healthTips = [
   {
@@ -230,7 +303,7 @@ function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -239,20 +312,17 @@ function HomePage() {
               <span className="inline-block px-4 py-2 bg-primary-100 text-primary-700 rounded-full text-sm font-medium mb-6">
                 🏥 AI 智能辅助诊断
               </span>
-              
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 mb-6">
                 流感哨兵
                 <span className="bg-gradient-to-r from-primary-600 to-cyan-500 bg-clip-text text-transparent">
                   智能自检
                 </span>
               </h1>
-
-              <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10">
+              <p className="text-lg md:text-xl text-slate-600 max-w-2xl mb-10">
                 描述您的症状，AI 结合产生式规则、模糊推理和贝叶斯网络，
                 快速评估您是否可能感染甲型流感，并给出就医建议
               </p>
-              
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-4">
                 <Link to="/diagnosis" className="btn-primary flex items-center space-x-2">
                   <span>立即自检</span>
                   <ArrowRight className="w-5 h-5" />
@@ -263,30 +333,16 @@ function HomePage() {
               </div>
             </motion.div>
 
-            {/* Floating symptoms */}
-            <motion.div 
-              className="flex justify-center gap-4 mt-12 flex-wrap"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
+            {/* 右侧：打字机演示卡片 */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
             >
-              {symptoms.map((symptom, index) => (
-                <motion.div
-                  key={symptom.name}
-                  className="flex items-center space-x-2 px-4 py-2 bg-white rounded-full shadow-md"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + index * 0.1 }}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <symptom.icon className="w-4 h-4 text-primary-500" />
-                  <span className="text-slate-700">{symptom.name}</span>
-                </motion.div>
-              ))}
+              <TypingDemo />
             </motion.div>
           </div>
         </div>
-
         {/* Background decoration */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary-200/30 rounded-full blur-3xl"></div>
@@ -456,8 +512,18 @@ function HomePage() {
         </div>
       </section>
 
-      {/* 健康科普 Section */}
-      <section className="py-20">
+      {/* 全国流感态势 Section */}
+      <section className="py-20 bg-white/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-slate-800 mb-4">全国流感态势</h2>
+            <p className="text-slate-500">各省/大区流感样病例就诊比例（ILI%）实时分级展示</p>
+          </div>
+          <FluMapChart />
+        </div>
+      </section>
+
+      {/* 健康科普 Section */}      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-800 mb-4">甲流健康科普</h2>

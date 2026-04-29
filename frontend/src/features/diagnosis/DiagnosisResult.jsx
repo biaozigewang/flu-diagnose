@@ -11,9 +11,11 @@ import {
   Loader2,
   Share2,
   Copy,
-  Check
+  Check,
+  Phone
 } from 'lucide-react'
 import BayesianNetworkViz from '../visualization/BayesianNetworkViz'
+import NearbyHospitals from '../../components/NearbyHospitals'
 
 const SYMPTOM_NAMES = {
   fever: '发热', cough: '咳嗽', muscle_pain: '肌肉酸痛',
@@ -21,6 +23,52 @@ const SYMPTOM_NAMES = {
   nasal_congestion: '鼻塞', diarrhea: '腹泻',
   breathing_difficulty: '呼吸困难', chills: '寒战',
   contact_history: '接触史', sudden_onset: '急性起病'
+}
+
+// 症状恶化警告信号
+const WARNING_SIGNALS = [
+  { icon: '🌡️', text: '体温持续高于 39.5°C 且退烧药无效' },
+  { icon: '😮‍💨', text: '出现呼吸困难、气短、胸痛' },
+  { icon: '🫀', text: '心跳异常加速或心悸' },
+  { icon: '🧠', text: '意识模糊、嗜睡、难以唤醒' },
+  { icon: '💧', text: '严重脱水：无尿、极度口渴、皮肤干燥' },
+  { icon: '🩸', text: '咳血或痰中带血' },
+  { icon: '👶', text: '儿童出现高热惊厥、呼吸急促' },
+]
+
+function WarningSignals() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border-2 border-red-300 bg-red-50 p-4"
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center flex-shrink-0">
+          <AlertTriangle className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="font-semibold text-red-700 text-sm">出现以下情况请立即就医</p>
+          <p className="text-xs text-red-500">不要等待，直接前往急诊或拨打 120</p>
+        </div>
+        <a
+          href="tel:120"
+          className="ml-auto flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-colors flex-shrink-0"
+        >
+          <Phone className="w-3.5 h-3.5" />
+          拨打 120
+        </a>
+      </div>
+      <ul className="space-y-1.5">
+        {WARNING_SIGNALS.map((w, i) => (
+          <li key={i} className="flex items-start gap-2 text-xs text-red-700">
+            <span className="flex-shrink-0">{w.icon}</span>
+            <span>{w.text}</span>
+          </li>
+        ))}
+      </ul>
+    </motion.div>
+  )
 }
 
 function DiagnosisResult({ result, symptoms = {}, compact = false }) {
@@ -214,6 +262,14 @@ function DiagnosisResult({ result, symptoms = {}, compact = false }) {
             <p className="text-xs text-slate-400 pt-2 border-t border-slate-200/50">
               本结果由 AI 推理生成，仅供参考，不替代医生诊断。
             </p>
+
+            {/* 高/中风险时显示警告信号和医院推荐 */}
+            {(result.risk_level === 'high' || result.risk_level === 'moderate') && (
+              <>
+                <WarningSignals />
+                <NearbyHospitals />
+              </>
+            )}
 
             <div className="flex gap-2 mt-3">
               <button
