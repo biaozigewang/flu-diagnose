@@ -503,14 +503,14 @@ function DiagnosisPage() {
   }
 
   const generateSymptomFeedback = (symptoms) => {
-    const parts = ['我已识别到以下信息：\n']
-    
+    const parts = ['识别结果：\n']
+
     Object.entries(symptoms).forEach(([key, value]) => {
+      if (key.startsWith('_')) return
+      if (key in { contact_history:1, no_vaccination:1, chronic_disease:1, age_elderly:1, age_child:1 }) return
       const name = SYMPTOM_NAME_MAP[key] || key
-      
-      if (value.present === false || value.negated) {
-        parts.push(`• ${name}：无`)
-      } else if (value.present) {
+      if (value.present === false || value.negated || value === false) return
+      if (value.present || value === true) {
         if (value.value) {
           parts.push(`• ${name}：${value.value}°C`)
         } else {
@@ -518,7 +518,7 @@ function DiagnosisPage() {
         }
       }
     })
-    
+
     return parts.join('\n')
   }
 
