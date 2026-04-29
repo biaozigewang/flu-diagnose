@@ -1,30 +1,23 @@
 """
 用户认证 API - 注册/登录
-使用 SQLite 存储用户数据，JWT 做 Token 认证
+使用 PostgreSQL 存储用户数据，JWT 做 Token 认证
 """
-import os
-import sqlite3
 import hashlib
 import secrets
+import psycopg2
 from flask import Blueprint, request, jsonify
 from datetime import timedelta
+from database.connection import get_connection
 
 bp = Blueprint('auth', __name__)
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'users.db')
-
-
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
 
 def init_db():
-    conn = get_db()
-    conn.execute('''
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
@@ -32,6 +25,7 @@ def init_db():
         )
     ''')
     conn.commit()
+    cursor.close()
     conn.close()
 
 
@@ -39,7 +33,6 @@ def hash_password(password: str, salt: str) -> str:
     return hashlib.sha256((password + salt).encode()).hexdigest()
 
 
-# 初始化数据库
 init_db()
 
 
@@ -60,21 +53,20 @@ def register():
     password_hash = hash_password(password, salt)
 
     try:
-        conn = get_db()
-        conn.execute(
-            'INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)',
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO users (username, password_hash, salt) VALUES (%s, %s, %s)',
             (username, password_hash, salt)
         )
         conn.commit()
+        cursor.close()
         conn.close()
-    except sqlite3.IntegrityError:
+    except psycopg2.errors.UniqueViolation:
         return jsonify({'success': False, 'error': '用户名已存在'}), 400
 
     from flask_jwt_extended import create_access_token
-    token = create_access_token(
-        identity=username,
-        expires_delta=timedelta(days=7)
-    )
+    token = create_access_token(identity=username, expires_delta=timedelta(days=7))
     return jsonify({'success': True, 'token': token, 'username': username})
 
 
@@ -87,22 +79,19 @@ def login():
     if not username or not password:
         return jsonify({'success': False, 'error': '请填写用户名和密码'}), 400
 
-    conn = get_db()
-    user = conn.execute(
-        'SELECT * FROM users WHERE username = ?', (username,)
-    ).fetchone()
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
+    user = cursor.fetchone()
+    cursor.close()
     conn.close()
 
     if not user:
         return jsonify({'success': False, 'error': '用户名或密码错误'}), 401
 
-    expected = hash_password(password, user['salt'])
-    if expected != user['password_hash']:
+    if hash_password(password, user['salt']) != user['password_hash']:
         return jsonify({'success': False, 'error': '用户名或密码错误'}), 401
 
     from flask_jwt_extended import create_access_token
-    token = create_access_token(
-        identity=username,
-        expires_delta=timedelta(days=7)
-    )
+    token = create_access_token(identity=username, expires_delta=timedelta(days=7))
     return jsonify({'success': True, 'token': token, 'username': username})

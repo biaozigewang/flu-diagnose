@@ -86,8 +86,6 @@ export default function NearbyHospitals() {
         </button>
       </div>
 
-      <p className="text-xs text-slate-400 mb-3">华中农业大学周边医院（示例数据）</p>
-
       <div className="space-y-2">
         {hospitals.map((h, i) => (
           <motion.div
@@ -103,14 +101,12 @@ export default function NearbyHospitals() {
                   <p className="text-xs font-semibold text-slate-800">{h.name}</p>
                   <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${h.tagColor}`}>{h.tag}</span>
                 </div>
-                <p className="text-xs text-slate-500 mb-1 leading-relaxed">{h.address}</p>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-xs text-slate-400 flex items-center gap-0.5">
-                    <Clock className="w-3 h-3 flex-shrink-0" />
-                    <span>{h.hours}</span>
-                  </span>
-                  <span className="text-xs text-primary-500 font-medium">{h.distance}</span>
-                </div>
+                <p className="text-xs text-slate-500 truncate">{h.address}</p>
+                <p className="text-xs text-slate-400 truncate mt-0.5 flex items-center gap-0.5">
+                  <Clock className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{h.hours}</span>
+                </p>
+                <p className="text-xs text-primary-500 font-medium mt-0.5">{h.distance}</p>
               </div>
               <a
                 href={`tel:${h.phone}`}
@@ -118,7 +114,7 @@ export default function NearbyHospitals() {
                 title={`拨打 ${h.phone}`}
               >
                 <Phone className="w-3 h-3" />
-                <span className="hidden sm:inline">{h.phone}</span>
+                <span className="hidden">{h.phone}</span>
               </a>
             </div>
           </motion.div>

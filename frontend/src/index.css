@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 移动端安全区支持 */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sar: env(safe-area-inset-right);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+}
+
 :root {
   --color-primary: #0284c7;
   --color-primary-light: #38bdf8;
@@ -82,7 +90,7 @@ body {
 
 /* 消息气泡样式 */
 .message-bubble {
-  max-width: 80%;
+  max-width: 100%;
   padding: 12px 16px;
   border-radius: 16px;
   line-height: 1.6;
@@ -161,7 +169,7 @@ body {
 
 /* 症状标签 */
 .symptom-tag {
-  @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
          transition-all duration-200 cursor-pointer;
 }
 

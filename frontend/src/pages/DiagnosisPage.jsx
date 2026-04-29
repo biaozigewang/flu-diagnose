@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -21,9 +22,9 @@ import {
   Mic,
   MicOff,
   GitCompare,
-  SlidersHorizontal,
-  UserCheck,
-  Heart
+  Heart,
+  Maximize2,
+  Minimize2
 } from 'lucide-react'
 import DiagnosisResult from '../features/diagnosis/DiagnosisResult'
 import RuleVisualization from '../features/visualization/RuleVisualization'
@@ -74,17 +75,29 @@ function SymptomsResultPanel({ currentSymptoms, diagnosisResult, symptomNameMap 
       </div>
 
       {/* 症状 Tab */}
-      {activeTab === 'symptoms' && (
-        Object.keys(currentSymptoms).length > 0 ? (
-          <div className="flex-1 overflow-y-auto space-y-1">
-            {Object.entries(currentSymptoms).map(([key, value]) => (
-              <div key={key} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                <span className="text-slate-600 text-sm">{symptomNameMap[key] || key}</span>
-                <span className={`text-sm font-medium ${value ? 'text-red-500' : 'text-green-500'}`}>
-                  {typeof value === 'number' ? `${value}°C` : value ? '有' : '无'}
-                </span>
-              </div>
-            ))}
+      {activeTab === 'symptoms' && (() => {
+        const presentSymptoms = Object.entries(currentSymptoms)
+          .filter(([key, value]) => {
+            if (key.startsWith('_')) return false
+            if (key in { contact_history:1, no_vaccination:1, chronic_disease:1, age_elderly:1, age_child:1 }) return false
+            const present = typeof value === 'object' ? value?.present : !!value
+            return present !== false && value !== null && value !== undefined && value !== false
+          })
+        return presentSymptoms.length > 0 ? (
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            {presentSymptoms.map(([key, value]) => {
+              const temp = typeof value === 'object' ? value?.value : typeof value === 'number' ? value : null
+              const label = symptomNameMap[key] || key
+              return (
+                <div key={key} className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-red-50 border border-red-100">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                  <span className="text-sm text-slate-700 font-medium">{label}</span>
+                  {temp && (
+                    <span className="ml-auto text-sm text-red-500 font-semibold">{temp}°C</span>
+                  )}
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
@@ -93,7 +106,7 @@ function SymptomsResultPanel({ currentSymptoms, diagnosisResult, symptomNameMap 
             <p className="text-slate-300 text-xs mt-1">在左侧描述症状后自动显示</p>
           </div>
         )
-      )}
+      })()}
 
       {/* 结果 Tab */}
       {activeTab === 'result' && (
@@ -142,6 +155,7 @@ const SYMPTOM_NAME_MAP = {
 }
 
 function DiagnosisPage() {
+  const location = useLocation()
   const [mode, setMode] = useState('chat')
 
   const [messages, setMessages] = useState(() => {
@@ -154,7 +168,7 @@ function DiagnosisPage() {
     } catch { return [{ role: 'assistant', content: '您好！请描述您的症状，例如："我发烧38.5度，浑身酸痛，咳嗽"。系统将帮您评估是否可能感染甲流，并给出就医建议。' }] }
   })
 
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(() => location.state?.initialInput || '')
   const [isLoading, setIsLoading] = useState(false)
 
   const [diagnosisResult, setDiagnosisResult] = useState(() => {
@@ -175,6 +189,16 @@ function DiagnosisPage() {
 
   const [thinkingStep, setThinkingStep] = useState('')
 
+  // 首页带 autoSubmit 跳转时自动触发发送
+  useEffect(() => {
+    if (location.state?.autoSubmit && location.state?.initialInput) {
+      const timer = setTimeout(() => {
+        handleSubmit({ preventDefault: () => {} })
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // 同步到 sessionStorage
   useEffect(() => {
     try { sessionStorage.setItem('diagnosis_messages', JSON.stringify(messages)) } catch {}
@@ -193,6 +217,13 @@ function DiagnosisPage() {
   
   const [isListening, setIsListening] = useState(false)
   const [speechSupported] = useState(() => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+  const [isChatFullscreen, setIsChatFullscreen] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setIsChatFullscreen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // 新增：严重程度、风险因素、鉴别诊断弹窗
   const [severity, setSeverity] = useState(1) // 0=轻 1=中 2=重
@@ -204,6 +235,8 @@ function DiagnosisPage() {
     age_child: false,
   })
   const [showRiskPanel, setShowRiskPanel] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [showQuickSymptoms, setShowQuickSymptoms] = useState(false)
   const [showDifferential, setShowDifferential] = useState(false)
 
   // 自动补全
@@ -470,14 +503,14 @@ function DiagnosisPage() {
   }
 
   const generateSymptomFeedback = (symptoms) => {
-    const parts = ['我已识别到以下信息：\n']
-    
+    const parts = ['识别结果：\n']
+
     Object.entries(symptoms).forEach(([key, value]) => {
+      if (key.startsWith('_')) return
+      if (key in { contact_history:1, no_vaccination:1, chronic_disease:1, age_elderly:1, age_child:1 }) return
       const name = SYMPTOM_NAME_MAP[key] || key
-      
-      if (value.present === false || value.negated) {
-        parts.push(`• ${name}：无`)
-      } else if (value.present) {
+      if (value.present === false || value.negated || value === false) return
+      if (value.present || value === true) {
         if (value.value) {
           parts.push(`• ${name}：${value.value}°C`)
         } else {
@@ -485,7 +518,7 @@ function DiagnosisPage() {
         }
       }
     })
-    
+
     return parts.join('\n')
   }
 
@@ -543,7 +576,7 @@ function DiagnosisPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
       {/* 模式切换 */}
       <div className="mb-6 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-1.5 shadow-lg inline-flex">
@@ -581,11 +614,11 @@ function DiagnosisPage() {
           />
         </div>
       ) : (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-6">
         {/* 上方三列：咽喉图像 + 聊天区 + 已识别症状 */}
-        <div className="grid lg:grid-cols-4 gap-6 items-start">
+        <div className="grid lg:grid-cols-4 gap-3 sm:gap-6 items-start">
           {/* 咽喉图像分析 - 占 1/4 */}
-          <div className="lg:col-span-1 flex flex-col gap-4">
+          <div className="lg:col-span-1 flex flex-col gap-4" style={{ height: 600 }}>
             <ThroatImageAnalysis
               onSymptomsExtracted={(imageSymptoms, summary) => {
                 const merged = { ...currentSymptoms, ...imageSymptoms }
@@ -607,11 +640,81 @@ function DiagnosisPage() {
                 runDiagnosisWithSymptoms(merged)
               }}
             />
+            {/* 感冒 vs 甲流 内联对比卡片 */}
+            <div className="card flex-1 flex flex-col overflow-hidden">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-200 flex-shrink-0">
+                <GitCompare className="w-4 h-4 text-primary-500" />
+                <span className="text-sm font-semibold text-slate-700">感冒 vs 甲流</span>
+              </div>
+              <div className="flex-1 overflow-y-auto mt-3">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-white">
+                    <tr>
+                      <th className="text-left py-1.5 pr-2 text-slate-400 font-medium w-1/3">特征</th>
+                      <th className="py-1.5 px-1 text-center">
+                        <span className="inline-block px-2 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold">甲流</span>
+                      </th>
+                      <th className="py-1.5 pl-1 text-center">
+                        <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full font-semibold">感冒</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { feature: '起病', flu: '急，数小时', cold: '缓，1-2天' },
+                      { feature: '发热', flu: '高热38-40°C', cold: '低热或无' },
+                      { feature: '发热持续', flu: '3-5天', cold: '1-2天' },
+                      { feature: '全身症状', flu: '严重', cold: '轻微' },
+                      { feature: '头痛', flu: '明显', cold: '轻微或无' },
+                      { feature: '肌肉酸痛', flu: '明显', cold: '轻微或无' },
+                      { feature: '乏力', flu: '严重，2-3周', cold: '轻微' },
+                      { feature: '鼻塞流涕', flu: '轻微', cold: '明显' },
+                      { feature: '咳嗽', flu: '干咳较重', cold: '轻微' },
+                      { feature: '打喷嚏', flu: '少见', cold: '常见' },
+                      { feature: '并发症', flu: '高风险', cold: '低' },
+                      { feature: '传染性', flu: '强', cold: '中等' },
+                      { feature: '病程', flu: '7-10天', cold: '5-7天' },
+                      { feature: '特效药', flu: '奥司他韦', cold: '无' },
+                    ].map((row, i) => (
+                      <tr key={row.feature} className={i % 2 === 0 ? 'bg-slate-50/50' : ''}>
+                        <td className="py-1.5 pr-2 text-slate-500 font-medium">{row.feature}</td>
+                        <td className="py-1.5 px-1 text-center text-red-600">{row.flu}</td>
+                        <td className="py-1.5 pl-1 text-center text-blue-600">{row.cold}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           {/* 聊天区域 - 占 2/4 */}
-          <div className="lg:col-span-2">
-            <div className="card flex flex-col" style={{ height: 600, minHeight: 400, maxHeight: 900, resize: 'vertical', overflow: 'hidden' }}>            {/* 聊天头部 */}
+          <div
+            className={isChatFullscreen ? 'fixed inset-0 z-50 p-4' : 'lg:col-span-2'}
+            onClick={isChatFullscreen ? () => setIsChatFullscreen(false) : undefined}
+          >
+            {/* 全屏背景遮罩 */}
+            <AnimatePresence>
+              {isChatFullscreen && (
+                <motion.div
+                  className="fixed inset-0 -z-[1] bg-black/30 backdrop-blur-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                />
+              )}
+            </AnimatePresence>
+            <motion.div
+              key={String(isChatFullscreen)}
+              className={`card flex flex-col ${isChatFullscreen ? 'h-full' : ''}`}
+              style={isChatFullscreen ? {} : { height: 600 }}
+              initial={{ scale: 0.94, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              onClick={(e) => e.stopPropagation()}
+            >
+            {/* 聊天头部 */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-full flex items-center justify-center">
@@ -622,34 +725,36 @@ function DiagnosisPage() {
                   <p className="text-xs text-slate-400">甲流智能自检助手</p>
                 </div>
               </div>
-              <button
-                onClick={handleReset}
-                className="flex items-center space-x-1 text-sm text-slate-500 hover:text-primary-600 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>重新开始</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleReset}
+                  className="flex items-center space-x-1 text-sm text-slate-500 hover:text-primary-600 transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>重新开始</span>
+                </button>
+                <button
+                  onClick={() => setIsChatFullscreen(v => !v)}
+                  title={isChatFullscreen ? '退出全屏' : '全屏展开'}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+                >
+                  {isChatFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {/* 消息列表 */}
-            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto py-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto py-2 space-y-2">
               <AnimatePresence>
                 {messages.map((message, index) => (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`flex items-start space-x-2 max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        message.role === 'user'
-                          ? 'bg-primary-100 text-primary-600'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                      </div>
+                    <div className={`max-w-[85%] ${message.role === 'user' ? '' : 'w-full'}`}>
                       <div className={`message-bubble ${message.role === 'user' ? 'message-user' : 'message-assistant'}`}>
                         {/* 思考过程（可折叠）- 仅诊断结果消息 */}
                         {message.thinking && message.thinking.length > 0 && (
@@ -703,17 +808,15 @@ function DiagnosisPage() {
                     </div>
                   </motion.div>
                 ))}
+
               </AnimatePresence>
 
               {isLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex items-center space-x-2 text-slate-500"
+                  className="flex justify-start"
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                    <Bot className="w-4 h-4" />
-                  </div>
                   <div className="message-bubble message-assistant">
                     <div className="flex items-center space-x-2">
                       <Loader2 className="w-4 h-4 animate-spin text-primary-500" />
@@ -726,206 +829,172 @@ function DiagnosisPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* 快速症状模板 */}
-            <div className="py-3 border-t border-slate-200">
-              <p className="text-xs text-slate-500 mb-2">快速模板：</p>
-              <div className="flex flex-wrap gap-2">
-                {SYMPTOM_TEMPLATES.map(t => (
-                  <button
-                    key={t.label}
-                    onClick={() => setInput(t.text)}
-                    className="px-2.5 py-1 text-xs rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition-colors"
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 快捷症状标签 */}
-            <div className="py-3 border-t border-slate-200">
-              <p className="text-xs text-slate-500 mb-2">快速添加症状：</p>
-              <div className="flex flex-wrap gap-2">
-                {quickSymptoms.map(symptom => (
-                  <button
-                    key={symptom}
-                    onClick={() => setInput(prev => prev ? `${prev}，${symptom}` : symptom)}
-                    className="symptom-tag symptom-tag-inactive"
-                  >
-                    {symptom}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 严重程度 + 风险因素 + 鉴别诊断 */}
-            <div className="py-3 border-t border-slate-200 space-y-3">
-              {/* 严重程度滑块 */}
-              <div className="flex items-center gap-3">
-                <SlidersHorizontal className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="text-xs text-slate-500 w-16 flex-shrink-0">症状程度</span>
-                <div className="flex gap-1 flex-1">
-                  {['轻', '中', '重'].map((label, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSeverity(i)}
-                      className={`flex-1 py-1 text-xs rounded-lg border transition-all ${
-                        severity === i
-                          ? i === 0 ? 'bg-green-100 border-green-400 text-green-700 font-medium'
-                          : i === 1 ? 'bg-amber-100 border-amber-400 text-amber-700 font-medium'
-                          : 'bg-red-100 border-red-400 text-red-700 font-medium'
-                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 风险因素 + 鉴别诊断按钮 */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowRiskPanel(v => !v)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-all ${
-                    Object.values(riskFactors).some(Boolean)
-                      ? 'bg-purple-100 border-purple-300 text-purple-700'
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                  }`}
-                >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  风险因素
-                  {Object.values(riskFactors).filter(Boolean).length > 0 && (
-                    <span className="bg-purple-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
-                      {Object.values(riskFactors).filter(Boolean).length}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDifferential(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-500 hover:border-primary-400 hover:text-primary-600 transition-all"
-                >
-                  <GitCompare className="w-3.5 h-3.5" />
-                  感冒 vs 甲流
-                </button>
-              </div>
-
-              {/* 风险因素展开面板 */}
-              {showRiskPanel && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-purple-50 rounded-xl p-3 border border-purple-100"
-                >
-                  <p className="text-xs text-purple-600 font-medium mb-2">勾选适用的风险因素（影响诊断权重）</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'contact_history', label: '近期接触流感患者' },
-                      { key: 'no_vaccination', label: '未接种流感疫苗' },
-                      { key: 'chronic_disease', label: '患有慢性基础病' },
-                      { key: 'age_elderly', label: '65岁以上老年人' },
-                      { key: 'age_child', label: '5岁以下儿童' },
-                    ].map(({ key, label }) => (
-                      <label key={key} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={riskFactors[key]}
-                          onChange={e => setRiskFactors(prev => ({ ...prev, [key]: e.target.checked }))}
-                          className="w-3.5 h-3.5 accent-purple-500"
-                        />
-                        <span className="text-xs text-slate-600">{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </div>
 
             {/* 输入区域 */}
-            <form onSubmit={handleSubmit} className="pt-4 border-t border-slate-200">
-              <div className="relative flex space-x-3">
-                <div className="flex-1 relative">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={input}
-                    onChange={(e) => {
-                      setInput(e.target.value)
-                      const val = e.target.value.trim()
-                      if (val.length >= 1) {
-                        const lastWord = val.split(/[，,、\s]/).pop()
-                        setSuggestions(
-                          lastWord
-                            ? SYMPTOM_SUGGESTIONS.filter(s => s.includes(lastWord) && s !== lastWord).slice(0, 5)
-                            : []
-                        )
-                      } else {
-                        setSuggestions([])
-                      }
-                    }}
-                    onBlur={() => setTimeout(() => setSuggestions([]), 150)}
-                    placeholder="描述您的症状，如：发烧38.5度，浑身酸痛..."
-                    className="input-field w-full"
-                    disabled={isLoading}
-                  />
-                  {suggestions.length > 0 && (
-                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden">
-                      {suggestions.map(s => (
-                        <button
-                          key={s}
-                          type="button"
-                          onMouseDown={() => {
-                            const parts = input.split(/([，,、\s]+)/)
-                            parts[parts.length - 1] = s
-                            setInput(parts.join(''))
-                            setSuggestions([])
-                          }}
-                          className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {speechSupported && (
-                  <button
-                    type="button"
-                    onClick={isListening ? stopListening : startListening}
-                    disabled={isLoading}
-                    title={isListening ? '停止录音' : '语音输入'}
-                    className={`px-4 rounded-xl border transition-all ${
-                      isListening
-                        ? 'bg-red-500 border-red-500 text-white animate-pulse'
-                        : 'border-slate-200 text-slate-500 hover:border-primary-400 hover:text-primary-500'
-                    }`}
-                  >
-                    {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-                  </button>
+            <form onSubmit={handleSubmit} className="pt-3">
+              <div className="relative rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md shadow-lg focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 focus-within:shadow-xl transition-all">
+                {/* 自动补全 */}
+                {suggestions.length > 0 && (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                    {suggestions.map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onMouseDown={() => {
+                          const parts = input.split(/([，,、\s]+)/)
+                          parts[parts.length - 1] = s
+                          setInput(parts.join(''))
+                          setSuggestions([])
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 )}
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="btn-primary px-4"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
-                </button>
+
+                {/* Textarea */}
+                <textarea
+                  ref={inputRef}
+                  rows={3}
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value)
+                    const val = e.target.value.trim()
+                    if (val.length >= 1) {
+                      const lastWord = val.split(/[，,、\s]/).pop()
+                      setSuggestions(
+                        lastWord
+                          ? SYMPTOM_SUGGESTIONS.filter(s => s.includes(lastWord) && s !== lastWord).slice(0, 5)
+                          : []
+                      )
+                    } else {
+                      setSuggestions([])
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSubmit(e)
+                    }
+                  }}
+                  placeholder="描述您的症状，如：发烧38.5度，浑身酸痛..."
+                  className="w-full bg-transparent px-4 pt-3 pb-1 text-sm outline-none resize-none placeholder:text-slate-400 disabled:opacity-50"
+                  disabled={isLoading}
+                />
+
+                {/* 底部按钮行 */}
+                <div className="flex items-center justify-between px-3 pb-2.5">
+                  {/* 左侧：模板 + 症状 按钮 */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => { setShowTemplates(v => !v); setShowQuickSymptoms(false) }}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
+                          showTemplates ? 'bg-indigo-50 border-indigo-300 text-indigo-600' : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        }`}
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        模板
+                      </button>
+                      <AnimatePresence>
+                        {showTemplates && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 4 }}
+                            className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-20 overflow-hidden"
+                          >
+                            {SYMPTOM_TEMPLATES.map(t => (
+                              <button
+                                key={t.label}
+                                type="button"
+                                onClick={() => { setInput(t.text); setShowTemplates(false) }}
+                                className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors border-b border-slate-100 last:border-0"
+                              >
+                                {t.label}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => { setShowQuickSymptoms(v => !v); setShowTemplates(false) }}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
+                          showQuickSymptoms ? 'bg-cyan-50 border-cyan-300 text-cyan-600' : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        }`}
+                      >
+                        <ThermometerSun className="w-3 h-3" />
+                        症状
+                      </button>
+                      <AnimatePresence>
+                        {showQuickSymptoms && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 4 }}
+                            className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-20 p-2"
+                          >
+                            <div className="flex flex-wrap gap-1.5">
+                              {quickSymptoms.map(symptom => (
+                                <button
+                                  key={symptom}
+                                  type="button"
+                                  onClick={() => { setInput(prev => prev ? `${prev}，${symptom}` : symptom) }}
+                                  className="px-2 py-1 text-xs rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-600 hover:bg-cyan-100 transition-colors"
+                                >
+                                  {symptom}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+                  {/* 右侧：麦克风 + 发送 */}
+                  <div className="flex items-center gap-1.5">
+                    {isListening && (
+                      <span className="text-xs text-red-500 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                        录音中
+                      </span>
+                    )}
+                    {speechSupported && (
+                      <button
+                        type="button"
+                        onClick={isListening ? stopListening : startListening}
+                        disabled={isLoading}
+                        title={isListening ? '停止录音' : '语音输入'}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all ${
+                          isListening
+                            ? 'bg-red-500 border-red-500 text-white'
+                            : 'border-slate-200 text-slate-500 hover:border-primary-400 hover:text-primary-500'
+                        }`}
+                      >
+                        {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={!input.trim() || isLoading}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
               </div>
-              {isListening && (
-                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse inline-block" />
-                  正在录音，请说出您的症状...
-                </p>
-              )}
             </form>
-          </div>
+            </motion.div>
           </div>
 
           {/* 已识别症状 + 自检结果 Tab 面板 - 占 1/4 */}

@@ -14,11 +14,25 @@ function PrivateRoute({ children }) {
   return token ? children : <Navigate to="/login" replace />
 }
 
-// 页面切换过渡动画包装
+// 页面切换过渡动画包装 — 从屏幕中心圆形晕开渲染
 const pageVariants = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } },
-  exit:    { opacity: 0, y: -8, transition: { duration: 0.15, ease: 'easeIn' } },
+  initial: {
+    opacity: 0,
+    clipPath: 'circle(8% at 50% 38%)',
+    filter: 'blur(12px)',
+  },
+  animate: {
+    opacity: 1,
+    clipPath: 'circle(150% at 50% 38%)',
+    filter: 'blur(0px)',
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+  },
+  exit: {
+    opacity: 0,
+    filter: 'blur(10px)',
+    scale: 1.03,
+    transition: { duration: 0.22, ease: 'easeIn' },
+  },
 }
 
 function PageWrapper({ children }) {
@@ -28,6 +42,7 @@ function PageWrapper({ children }) {
       initial="initial"
       animate="animate"
       exit="exit"
+      style={{ willChange: 'clip-path, filter, opacity' }}
     >
       {children}
     </motion.div>

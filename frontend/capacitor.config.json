@@ -1,0 +1,13 @@
+{
+  "appId": "com.flusentinel.app",
+  "appName": "流感哨兵",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true,
+    "allowNavigation": ["68.183.233.95"]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

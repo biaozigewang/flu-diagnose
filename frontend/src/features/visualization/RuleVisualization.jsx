@@ -91,133 +91,136 @@ function KnowledgeGraph({ result, symptoms }) {
   }
 
   return (
-    <div className="relative bg-slate-900 rounded-xl overflow-hidden" style={{ height: H + 20 }}>
-      <svg
-        ref={svgRef}
-        width="100%"
-        height={H + 20}
-        viewBox={`0 0 ${W} ${H + 20}`}
-        className="w-full"
-      >
-        <defs>
-          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#475569" />
-          </marker>
-          <marker id="arrow-active" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L0,6 L8,3 z" fill="#38bdf8" />
-          </marker>
-          {/* 发光效果 */}
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-            <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
-          </filter>
-        </defs>
+    <div className="space-y-2">
+      {/* SVG 图谱区域（不含任何绝对定位浮层） */}
+      <div className="bg-slate-900 rounded-xl overflow-hidden">
+        <svg
+          ref={svgRef}
+          width="100%"
+          height={H + 20}
+          viewBox={`0 0 ${W} ${H + 20}`}
+          className="w-full"
+        >
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#475569" />
+            </marker>
+            <marker id="arrow-active" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#38bdf8" />
+            </marker>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+              <feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge>
+            </filter>
+          </defs>
 
-        {/* 背景网格 */}
-        <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
-          <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" strokeWidth="0.5" />
-        </pattern>
-        <rect width={W} height={H + 20} fill="url(#grid)" />
+          <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" strokeWidth="0.5" />
+          </pattern>
+          <rect width={W} height={H + 20} fill="url(#grid)" />
 
-        {/* 列标题 */}
-        {[
-          { x: 80, label: '症状输入', color: '#818cf8' },
-          { x: 340, label: '推理规则', color: '#fbbf24' },
-          { x: 640, label: '诊断结论', color: conclusionColor }
-        ].map(col => (
-          <text key={col.x} x={col.x} y={16} textAnchor="middle"
-            fill={col.color} fontSize="11" fontWeight="600" opacity="0.8">
-            {col.label}
-          </text>
-        ))}
+          {[
+            { x: 80, label: '症状输入', color: '#818cf8' },
+            { x: 340, label: '推理规则', color: '#fbbf24' },
+            { x: 640, label: '诊断结论', color: conclusionColor }
+          ].map(col => (
+            <text key={col.x} x={col.x} y={16} textAnchor="middle"
+              fill={col.color} fontSize="11" fontWeight="600" opacity="0.8">
+              {col.label}
+            </text>
+          ))}
 
-        {/* 边 */}
-        {edges.map((edge, i) => {
-          const from = nodeMap[edge.from]
-          const to = nodeMap[edge.to]
-          if (!from || !to) return null
-          const isHovered = hoveredNode === edge.from || hoveredNode === edge.to
-          const dx = to.x - from.x
-          const dy = to.y - from.y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          const r1 = getNodeRadius(from)
-          const r2 = getNodeRadius(to)
-          const x1 = from.x + dx / dist * r1
-          const y1 = from.y + dy / dist * r1
-          const x2 = to.x - dx / dist * (r2 + 8)
-          const y2 = to.y - dy / dist * (r2 + 8)
-          // 贝塞尔控制点
-          const cx = (x1 + x2) / 2
-          const cy = (y1 + y2) / 2 - 20
+          {edges.map((edge, i) => {
+            const from = nodeMap[edge.from]
+            const to = nodeMap[edge.to]
+            if (!from || !to) return null
+            const isHovered = hoveredNode === edge.from || hoveredNode === edge.to
+            const dx = to.x - from.x
+            const dy = to.y - from.y
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            const r1 = getNodeRadius(from)
+            const r2 = getNodeRadius(to)
+            const x1 = from.x + dx / dist * r1
+            const y1 = from.y + dy / dist * r1
+            const x2 = to.x - dx / dist * (r2 + 8)
+            const y2 = to.y - dy / dist * (r2 + 8)
+            const cx = (x1 + x2) / 2
+            const cy = (y1 + y2) / 2 - 20
+            return (
+              <path
+                key={i}
+                d={`M${x1},${y1} Q${cx},${cy} ${x2},${y2}`}
+                fill="none"
+                stroke={isHovered ? '#38bdf8' : '#334155'}
+                strokeWidth={isHovered ? 2 : 1}
+                markerEnd={isHovered ? 'url(#arrow-active)' : 'url(#arrow)'}
+                opacity={isHovered ? 1 : 0.6}
+                style={{ transition: 'all 0.2s' }}
+              />
+            )
+          })}
 
-          return (
-            <path
-              key={i}
-              d={`M${x1},${y1} Q${cx},${cy} ${x2},${y2}`}
-              fill="none"
-              stroke={isHovered ? '#38bdf8' : '#334155'}
-              strokeWidth={isHovered ? 2 : 1}
-              markerEnd={isHovered ? 'url(#arrow-active)' : 'url(#arrow)'}
-              opacity={isHovered ? 1 : 0.6}
-              style={{ transition: 'all 0.2s' }}
-            />
-          )
-        })}
-
-        {/* 节点 */}
-        {allNodes.map(node => {
-          const r = getNodeRadius(node)
-          const isHov = hoveredNode === node.id
-          return (
-            <g
-              key={node.id}
-              transform={`translate(${node.x},${node.y})`}
-              style={{ cursor: 'pointer' }}
-              onMouseEnter={() => setHoveredNode(node.id)}
-              onMouseLeave={() => setHoveredNode(null)}
-              onClick={() => setTooltip(tooltip?.id === node.id ? null : node)}
-            >
-              {/* 光晕 */}
-              {isHov && (
-                <circle r={r + 8} fill={node.color} opacity="0.15" filter="url(#glow)" />
-              )}
-              {/* 外环 */}
-              <circle r={r + 3} fill="none"
-                stroke={node.color} strokeWidth={isHov ? 2 : 1} opacity={isHov ? 0.8 : 0.3} />
-              {/* 主圆 */}
-              <circle r={r} fill={node.color} opacity={isHov ? 1 : 0.85} />
-
-              {/* 置信度弧（规则/结论节点） */}
-              {node.confidence && (
-                <circle r={r} fill="none" stroke="white" strokeWidth="2.5"
-                  strokeDasharray={`${node.confidence * 2 * Math.PI * r} ${2 * Math.PI * r}`}
-                  transform="rotate(-90)"
-                  opacity="0.5" />
-              )}
-
-              {/* 标签 */}
-              <text textAnchor="middle" fill="white" fontSize={node.type === 'conclusion' ? 10 : 9}
-                fontWeight="600" dy="1">
-                {node.label.length > 6 ? node.label.slice(0, 6) + '…' : node.label}
-              </text>
-              {node.confidence && (
-                <text textAnchor="middle" fill="white" fontSize="8" dy="12" opacity="0.9">
-                  {(node.confidence * 100).toFixed(0)}%
+          {allNodes.map(node => {
+            const r = getNodeRadius(node)
+            const isHov = hoveredNode === node.id
+            return (
+              <g
+                key={node.id}
+                transform={`translate(${node.x},${node.y})`}
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={() => setHoveredNode(node.id)}
+                onMouseLeave={() => setHoveredNode(null)}
+                onClick={() => setTooltip(tooltip?.id === node.id ? null : node)}
+              >
+                {isHov && (
+                  <circle r={r + 8} fill={node.color} opacity="0.15" filter="url(#glow)" />
+                )}
+                <circle r={r + 3} fill="none"
+                  stroke={node.color} strokeWidth={isHov ? 2 : 1} opacity={isHov ? 0.8 : 0.3} />
+                <circle r={r} fill={node.color} opacity={isHov ? 1 : 0.85} />
+                {node.confidence && (
+                  <circle r={r} fill="none" stroke="white" strokeWidth="2.5"
+                    strokeDasharray={`${node.confidence * 2 * Math.PI * r} ${2 * Math.PI * r}`}
+                    transform="rotate(-90)" opacity="0.5" />
+                )}
+                <text textAnchor="middle" fill="white" fontSize={node.type === 'conclusion' ? 10 : 9}
+                  fontWeight="600" dy="1">
+                  {node.label.length > 6 ? node.label.slice(0, 6) + '…' : node.label}
                 </text>
-              )}
-            </g>
-          )
-        })}
-      </svg>
+                {node.confidence && (
+                  <text textAnchor="middle" fill="white" fontSize="8" dy="12" opacity="0.9">
+                    {(node.confidence * 100).toFixed(0)}%
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+      </div>
 
-      {/* Tooltip */}
+      {/* 图例 — 图谱下方独立一行 */}
+      <div className="flex items-center gap-4 px-1 text-xs text-slate-500">
+        {[
+          { color: '#6366f1', label: '症状节点' },
+          { color: '#f59e0b', label: '规则节点' },
+          { color: conclusionColor, label: '结论节点' }
+        ].map(item => (
+          <div key={item.label} className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+            <span>{item.label}</span>
+          </div>
+        ))}
+        <span className="ml-auto text-slate-400">点击节点查看详情</span>
+      </div>
+
+      {/* Tooltip — 图谱下方展开，不遮挡任何内容 */}
       <AnimatePresence>
         {tooltip && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute bottom-3 left-3 right-3 bg-slate-800 border border-slate-600 rounded-xl p-3 text-sm"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className="bg-slate-800 border border-slate-600 rounded-xl p-3 text-sm"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -235,27 +238,13 @@ function KnowledgeGraph({ result, symptoms }) {
                   <p className="text-slate-300 text-xs mt-0.5">置信度：{(tooltip.confidence * 100).toFixed(1)}%</p>
                 )}
               </div>
-              <button onClick={() => setTooltip(null)} className="text-slate-500 hover:text-white ml-2">
+              <button onClick={() => setTooltip(null)} className="text-slate-500 hover:text-white ml-2 flex-shrink-0">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* 图例 */}
-      <div className="absolute top-3 right-3 flex flex-col gap-1 text-xs">
-        {[
-          { color: '#6366f1', label: '症状节点' },
-          { color: '#f59e0b', label: '规则节点' },
-          { color: conclusionColor, label: '结论节点' }
-        ].map(item => (
-          <div key={item.label} className="flex items-center gap-1.5 bg-slate-800/80 px-2 py-1 rounded-lg">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-            <span className="text-slate-300">{item.label}</span>
-          </div>
-        ))}
-      </div>
     </div>
   )
 }

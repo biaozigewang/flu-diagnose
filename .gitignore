@@ -22,3 +22,7 @@ frontend/dist/
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# Capacitor Android 项目（本地生成，不上传）
+
+frontend/.env.mobile

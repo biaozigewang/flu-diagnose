@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   MessageSquare,
@@ -23,7 +23,9 @@ import {
   TrendingUp,
   AlertCircle,
   MapPin,
-  Pill
+  Pill,
+  Mic,
+  MicOff
 } from 'lucide-react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -90,10 +92,42 @@ const DEMO_STEPS = [
 ]
 
 function TypingDemo() {
+  const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [displayed, setDisplayed] = useState('')
   const [charIdx, setCharIdx] = useState(0)
   const [done, setDone] = useState(false)
+  const [userInput, setUserInput] = useState('')
+  const [isListening, setIsListening] = useState(false)
+  const [speechSupported] = useState(() => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+  const recognitionRef = useRef(null)
+
+  const handleSubmit = () => {
+    if (userInput.trim()) navigate('/diagnosis', { state: { initialInput: userInput.trim(), autoSubmit: true } })
+  }
+
+  const startListening = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) return
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'zh-CN'
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.onstart = () => setIsListening(true)
+    recognition.onend = () => setIsListening(false)
+    recognition.onerror = () => setIsListening(false)
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript
+      setUserInput(prev => prev ? `${prev}，${transcript}` : transcript)
+    }
+    recognitionRef.current = recognition
+    recognition.start()
+  }, [])
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop()
+    setIsListening(false)
+  }, [])
 
   useEffect(() => {
     if (done) {
@@ -140,14 +174,42 @@ function TypingDemo() {
           </div>
         )}
       </div>
-      {/* 输入框模拟 */}
+      {/* 输入框 */}
       <div className="px-5 pb-5">
-        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
-          <span className="text-xs text-slate-400 flex-1">描述您的症状...</span>
-          <div className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center">
+        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+          <input
+            type="text"
+            value={userInput}
+            onChange={e => setUserInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            placeholder="描述您的症状，按 Enter 开始诊断..."
+            className="text-xs text-slate-700 flex-1 bg-transparent outline-none placeholder:text-slate-400"
+          />
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={isListening ? stopListening : startListening}
+              title={isListening ? '停止录音' : '语音输入'}
+              className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
+                isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-200 hover:bg-slate-300'
+              }`}
+            >
+              {isListening ? <MicOff className="w-3 h-3 text-white" /> : <Mic className="w-3 h-3 text-slate-500" />}
+            </button>
+          )}
+          <button
+            onClick={handleSubmit}
+            className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center hover:bg-primary-600 transition-colors"
+          >
             <ArrowRight className="w-3 h-3 text-white" />
-          </div>
+          </button>
         </div>
+        {isListening && (
+          <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse inline-block" />
+            正在录音，请说出您的症状...
+          </p>
+        )}
       </div>
     </div>
   )
@@ -585,7 +647,7 @@ function HomePage() {
       {/* Footer */}
       <footer className="py-8 bg-slate-800 text-slate-400">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-sm">© 2026 流感哨兵 · 甲流智能自检系统 · 结果仅供参考，不替代医生诊断</p>
+          <p className="text-sm">© 2026 哨兵 · 流感辅助诊断</p>
         </div>
       </footer>
     </div>

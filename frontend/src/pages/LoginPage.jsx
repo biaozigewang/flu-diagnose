@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Lock, Eye, EyeOff, Loader2, AlertCircle, Shield } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, Loader2, AlertCircle, Activity } from 'lucide-react'
 import { authService } from '../services/api'
 
 function LoginPage() {
@@ -57,11 +57,11 @@ function LoginPage() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Shield className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary-500/30">
+            <Activity className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-800">流感哨兵</h1>
-          <p className="text-slate-500 text-sm mt-1">甲流智能自检系统</p>
+          <p className="text-slate-500 text-sm mt-1">甲流智能自检</p>
         </div>
 
         {/* 卡片 */}
@@ -166,9 +166,6 @@ function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-xs text-slate-400 mt-6">
-            本系统仅供参考，不替代医生诊断
-          </p>
         </div>
       </motion.div>
     </div>

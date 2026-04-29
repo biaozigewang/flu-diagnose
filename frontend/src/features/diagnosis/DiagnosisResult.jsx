@@ -48,8 +48,7 @@ function WarningSignals() {
           <AlertTriangle className="w-4 h-4 text-white" />
         </div>
         <div>
-          <p className="font-semibold text-red-700 text-sm">出现以下情况请立即就医</p>
-          <p className="text-xs text-red-500">不要等待，直接前往急诊或拨打 120</p>
+          <p className="font-semibold text-red-700 text-sm">就医警示</p>
         </div>
         <a
           href="tel:120"
@@ -258,10 +257,6 @@ function DiagnosisResult({ result, symptoms = {}, compact = false }) {
                 </ul>
               </div>
             )}
-
-            <p className="text-xs text-slate-400 pt-2 border-t border-slate-200/50">
-              本结果由 AI 推理生成，仅供参考，不替代医生诊断。
-            </p>
 
             {/* 高/中风险时显示警告信号和医院推荐 */}
             {(result.risk_level === 'high' || result.risk_level === 'moderate') && (

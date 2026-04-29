@@ -7,10 +7,8 @@ class Config:
     """基础配置"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'flu-diagnosis-expert-system-secret-key'
     
-    # 数据库配置
+    # 知识库根目录
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    DATABASE_PATH = os.path.join(BASE_DIR, 'database', 'flu_diagnosis.db')
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{DATABASE_PATH}'
     
     # 知识库路径
     KNOWLEDGE_BASE_PATH = os.path.join(BASE_DIR, 'knowledge_base')
