@@ -22,8 +22,6 @@ import {
   Mic,
   MicOff,
   GitCompare,
-  SlidersHorizontal,
-  UserCheck,
   Heart,
   Maximize2,
   Minimize2
@@ -237,6 +235,8 @@ function DiagnosisPage() {
     age_child: false,
   })
   const [showRiskPanel, setShowRiskPanel] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [showQuickSymptoms, setShowQuickSymptoms] = useState(false)
   const [showDifferential, setShowDifferential] = useState(false)
 
   // 自动补全
@@ -829,189 +829,171 @@ function DiagnosisPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* 严重程度 + 风险因素 同一行 */}
-            <div className="py-3 border-t border-slate-200 space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                <span className="text-xs text-slate-500 flex-shrink-0">症状程度</span>
-                <div className="flex gap-1">
-                  {['轻', '中', '重'].map((label, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSeverity(i)}
-                      className={`px-2.5 py-0.5 text-xs rounded-lg border transition-all ${
-                        severity === i
-                          ? i === 0 ? 'bg-green-100 border-green-400 text-green-700 font-medium'
-                          : i === 1 ? 'bg-amber-100 border-amber-400 text-amber-700 font-medium'
-                          : 'bg-red-100 border-red-400 text-red-700 font-medium'
-                          : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <div className="w-px h-3.5 bg-slate-200 flex-shrink-0" />
-                <button
-                  type="button"
-                  onClick={() => setShowRiskPanel(v => !v)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-all ${
-                    Object.values(riskFactors).some(Boolean)
-                      ? 'bg-purple-100 border-purple-300 text-purple-700'
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'
-                  }`}
-                >
-                  <UserCheck className="w-3.5 h-3.5" />
-                  风险因素
-                  {Object.values(riskFactors).filter(Boolean).length > 0 && (
-                    <span className="bg-purple-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
-                      {Object.values(riskFactors).filter(Boolean).length}
-                    </span>
-                  )}
-                </button>
-              </div>
-
-              {/* 风险因素展开面板 */}
-              {showRiskPanel && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-purple-50 rounded-xl p-3 border border-purple-100"
-                >
-                  <p className="text-xs text-purple-600 font-medium mb-2">勾选适用的风险因素（影响诊断权重）</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { key: 'contact_history', label: '近期接触流感患者' },
-                      { key: 'no_vaccination', label: '未接种流感疫苗' },
-                      { key: 'chronic_disease', label: '患有慢性基础病' },
-                      { key: 'age_elderly', label: '65岁以上老年人' },
-                      { key: 'age_child', label: '5岁以下儿童' },
-                    ].map(({ key, label }) => (
-                      <label key={key} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={riskFactors[key]}
-                          onChange={e => setRiskFactors(prev => ({ ...prev, [key]: e.target.checked }))}
-                          className="w-3.5 h-3.5 accent-purple-500"
-                        />
-                        <span className="text-xs text-slate-600">{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </div>
 
             {/* 输入区域 */}
-            <form onSubmit={handleSubmit} className="py-3 border-t border-slate-200">
-              <div className="relative flex space-x-3">
-                <div className="flex-1 relative">
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={input}
-                    onChange={(e) => {
-                      setInput(e.target.value)
-                      const val = e.target.value.trim()
-                      if (val.length >= 1) {
-                        const lastWord = val.split(/[，,、\s]/).pop()
-                        setSuggestions(
-                          lastWord
-                            ? SYMPTOM_SUGGESTIONS.filter(s => s.includes(lastWord) && s !== lastWord).slice(0, 5)
-                            : []
-                        )
-                      } else {
-                        setSuggestions([])
-                      }
-                    }}
-                    onBlur={() => setTimeout(() => setSuggestions([]), 150)}
-                    placeholder="描述您的症状，如：发烧38.5度，浑身酸痛..."
-                    className="input-field w-full"
-                    disabled={isLoading}
-                  />
-                  {suggestions.length > 0 && (
-                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden">
-                      {suggestions.map(s => (
-                        <button
-                          key={s}
-                          type="button"
-                          onMouseDown={() => {
-                            const parts = input.split(/([，,、\s]+)/)
-                            parts[parts.length - 1] = s
-                            setInput(parts.join(''))
-                            setSuggestions([])
-                          }}
-                          className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                {speechSupported && (
-                  <button
-                    type="button"
-                    onClick={isListening ? stopListening : startListening}
-                    disabled={isLoading}
-                    title={isListening ? '停止录音' : '语音输入'}
-                    className={`px-4 rounded-xl border transition-all ${
-                      isListening
-                        ? 'bg-red-500 border-red-500 text-white animate-pulse'
-                        : 'border-slate-200 text-slate-500 hover:border-primary-400 hover:text-primary-500'
-                    }`}
-                  >
-                    {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-                  </button>
+            <form onSubmit={handleSubmit} className="pt-3">
+              <div className="relative rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-md shadow-lg focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 focus-within:shadow-xl transition-all">
+                {/* 自动补全 */}
+                {suggestions.length > 0 && (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                    {suggestions.map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        onMouseDown={() => {
+                          const parts = input.split(/([，,、\s]+)/)
+                          parts[parts.length - 1] = s
+                          setInput(parts.join(''))
+                          setSuggestions([])
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
                 )}
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="btn-primary px-4"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              {isListening && (
-                <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse inline-block" />
-                  正在录音，请说出您的症状...
-                </p>
-              )}
-            </form>
 
-            {/* 快速模板 + 快速添加症状 各占一行 */}
-            <div className="py-3 border-t border-slate-200 space-y-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-slate-400 flex-shrink-0">模板：</span>
-                {SYMPTOM_TEMPLATES.map(t => (
-                  <button
-                    key={t.label}
-                    onClick={() => setInput(t.text)}
-                    className="px-2 py-0.5 text-xs rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition-colors"
-                  >
-                    {t.label}
-                  </button>
-                ))}
+                {/* Textarea */}
+                <textarea
+                  ref={inputRef}
+                  rows={3}
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value)
+                    const val = e.target.value.trim()
+                    if (val.length >= 1) {
+                      const lastWord = val.split(/[，,、\s]/).pop()
+                      setSuggestions(
+                        lastWord
+                          ? SYMPTOM_SUGGESTIONS.filter(s => s.includes(lastWord) && s !== lastWord).slice(0, 5)
+                          : []
+                      )
+                    } else {
+                      setSuggestions([])
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSubmit(e)
+                    }
+                  }}
+                  placeholder="描述您的症状，如：发烧38.5度，浑身酸痛..."
+                  className="w-full bg-transparent px-4 pt-3 pb-1 text-sm outline-none resize-none placeholder:text-slate-400 disabled:opacity-50"
+                  disabled={isLoading}
+                />
+
+                {/* 底部按钮行 */}
+                <div className="flex items-center justify-between px-3 pb-2.5">
+                  {/* 左侧：模板 + 症状 按钮 */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => { setShowTemplates(v => !v); setShowQuickSymptoms(false) }}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
+                          showTemplates ? 'bg-indigo-50 border-indigo-300 text-indigo-600' : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        }`}
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        模板
+                      </button>
+                      <AnimatePresence>
+                        {showTemplates && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 4 }}
+                            className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-20 overflow-hidden"
+                          >
+                            {SYMPTOM_TEMPLATES.map(t => (
+                              <button
+                                key={t.label}
+                                type="button"
+                                onClick={() => { setInput(t.text); setShowTemplates(false) }}
+                                className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors border-b border-slate-100 last:border-0"
+                              >
+                                {t.label}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => { setShowQuickSymptoms(v => !v); setShowTemplates(false) }}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-all ${
+                          showQuickSymptoms ? 'bg-cyan-50 border-cyan-300 text-cyan-600' : 'border-slate-200 text-slate-500 hover:border-slate-300'
+                        }`}
+                      >
+                        <ThermometerSun className="w-3 h-3" />
+                        症状
+                      </button>
+                      <AnimatePresence>
+                        {showQuickSymptoms && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 4 }}
+                            className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-20 p-2"
+                          >
+                            <div className="flex flex-wrap gap-1.5">
+                              {quickSymptoms.map(symptom => (
+                                <button
+                                  key={symptom}
+                                  type="button"
+                                  onClick={() => { setInput(prev => prev ? `${prev}，${symptom}` : symptom) }}
+                                  className="px-2 py-1 text-xs rounded-lg bg-cyan-50 border border-cyan-200 text-cyan-600 hover:bg-cyan-100 transition-colors"
+                                >
+                                  {symptom}
+                                </button>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+                  {/* 右侧：麦克风 + 发送 */}
+                  <div className="flex items-center gap-1.5">
+                    {isListening && (
+                      <span className="text-xs text-red-500 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                        录音中
+                      </span>
+                    )}
+                    {speechSupported && (
+                      <button
+                        type="button"
+                        onClick={isListening ? stopListening : startListening}
+                        disabled={isLoading}
+                        title={isListening ? '停止录音' : '语音输入'}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all ${
+                          isListening
+                            ? 'bg-red-500 border-red-500 text-white'
+                            : 'border-slate-200 text-slate-500 hover:border-primary-400 hover:text-primary-500'
+                        }`}
+                      >
+                        {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={!input.trim() || isLoading}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    >
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-slate-400 flex-shrink-0">症状：</span>
-                {quickSymptoms.map(symptom => (
-                  <button
-                    key={symptom}
-                    onClick={() => setInput(prev => prev ? `${prev}，${symptom}` : symptom)}
-                    className="symptom-tag symptom-tag-inactive"
-                  >
-                    {symptom}
-                  </button>
-                ))}
-              </div>
-            </div>
+            </form>
             </motion.div>
           </div>
 
