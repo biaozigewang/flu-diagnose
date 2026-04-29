@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -142,6 +143,7 @@ const SYMPTOM_NAME_MAP = {
 }
 
 function DiagnosisPage() {
+  const location = useLocation()
   const [mode, setMode] = useState('chat')
 
   const [messages, setMessages] = useState(() => {
@@ -154,7 +156,7 @@ function DiagnosisPage() {
     } catch { return [{ role: 'assistant', content: '您好！请描述您的症状，例如："我发烧38.5度，浑身酸痛，咳嗽"。系统将帮您评估是否可能感染甲流，并给出就医建议。' }] }
   })
 
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(() => location.state?.initialInput || '')
   const [isLoading, setIsLoading] = useState(false)
 
   const [diagnosisResult, setDiagnosisResult] = useState(() => {
@@ -585,7 +587,7 @@ function DiagnosisPage() {
         {/* 上方三列：咽喉图像 + 聊天区 + 已识别症状 */}
         <div className="grid lg:grid-cols-4 gap-6 items-start">
           {/* 咽喉图像分析 - 占 1/4 */}
-          <div className="lg:col-span-1 flex flex-col gap-4">
+          <div className="lg:col-span-1 flex flex-col gap-4" style={{ height: 600 }}>
             <ThroatImageAnalysis
               onSymptomsExtracted={(imageSymptoms, summary) => {
                 const merged = { ...currentSymptoms, ...imageSymptoms }
@@ -607,6 +609,52 @@ function DiagnosisPage() {
                 runDiagnosisWithSymptoms(merged)
               }}
             />
+            {/* 感冒 vs 甲流 内联对比卡片 */}
+            <div className="card flex-1 flex flex-col overflow-hidden">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-200 flex-shrink-0">
+                <GitCompare className="w-4 h-4 text-primary-500" />
+                <span className="text-sm font-semibold text-slate-700">感冒 vs 甲流</span>
+              </div>
+              <div className="flex-1 overflow-y-auto mt-3">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-white">
+                    <tr>
+                      <th className="text-left py-1.5 pr-2 text-slate-400 font-medium w-1/3">特征</th>
+                      <th className="py-1.5 px-1 text-center">
+                        <span className="inline-block px-2 py-0.5 bg-red-100 text-red-600 rounded-full font-semibold">甲流</span>
+                      </th>
+                      <th className="py-1.5 pl-1 text-center">
+                        <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full font-semibold">感冒</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { feature: '起病', flu: '急，数小时', cold: '缓，1-2天' },
+                      { feature: '发热', flu: '高热38-40°C', cold: '低热或无' },
+                      { feature: '发热持续', flu: '3-5天', cold: '1-2天' },
+                      { feature: '全身症状', flu: '严重', cold: '轻微' },
+                      { feature: '头痛', flu: '明显', cold: '轻微或无' },
+                      { feature: '肌肉酸痛', flu: '明显', cold: '轻微或无' },
+                      { feature: '乏力', flu: '严重，2-3周', cold: '轻微' },
+                      { feature: '鼻塞流涕', flu: '轻微', cold: '明显' },
+                      { feature: '咳嗽', flu: '干咳较重', cold: '轻微' },
+                      { feature: '打喷嚏', flu: '少见', cold: '常见' },
+                      { feature: '并发症', flu: '高风险', cold: '低' },
+                      { feature: '传染性', flu: '强', cold: '中等' },
+                      { feature: '病程', flu: '7-10天', cold: '5-7天' },
+                      { feature: '特效药', flu: '奥司他韦', cold: '无' },
+                    ].map((row, i) => (
+                      <tr key={row.feature} className={i % 2 === 0 ? 'bg-slate-50/50' : ''}>
+                        <td className="py-1.5 pr-2 text-slate-500 font-medium">{row.feature}</td>
+                        <td className="py-1.5 px-1 text-center text-red-600">{row.flu}</td>
+                        <td className="py-1.5 pl-1 text-center text-blue-600">{row.cold}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           {/* 聊天区域 - 占 2/4 */}
@@ -726,50 +774,17 @@ function DiagnosisPage() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* 快速症状模板 */}
-            <div className="py-3 border-t border-slate-200">
-              <p className="text-xs text-slate-500 mb-2">快速模板：</p>
-              <div className="flex flex-wrap gap-2">
-                {SYMPTOM_TEMPLATES.map(t => (
-                  <button
-                    key={t.label}
-                    onClick={() => setInput(t.text)}
-                    className="px-2.5 py-1 text-xs rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition-colors"
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 快捷症状标签 */}
-            <div className="py-3 border-t border-slate-200">
-              <p className="text-xs text-slate-500 mb-2">快速添加症状：</p>
-              <div className="flex flex-wrap gap-2">
-                {quickSymptoms.map(symptom => (
-                  <button
-                    key={symptom}
-                    onClick={() => setInput(prev => prev ? `${prev}，${symptom}` : symptom)}
-                    className="symptom-tag symptom-tag-inactive"
-                  >
-                    {symptom}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 严重程度 + 风险因素 + 鉴别诊断 */}
-            <div className="py-3 border-t border-slate-200 space-y-3">
-              {/* 严重程度滑块 */}
-              <div className="flex items-center gap-3">
-                <SlidersHorizontal className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="text-xs text-slate-500 w-16 flex-shrink-0">症状程度</span>
-                <div className="flex gap-1 flex-1">
+            {/* 严重程度 + 风险因素 同一行 */}
+            <div className="py-3 border-t border-slate-200 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                <span className="text-xs text-slate-500 flex-shrink-0">症状程度</span>
+                <div className="flex gap-1">
                   {['轻', '中', '重'].map((label, i) => (
                     <button
                       key={i}
                       onClick={() => setSeverity(i)}
-                      className={`flex-1 py-1 text-xs rounded-lg border transition-all ${
+                      className={`px-2.5 py-0.5 text-xs rounded-lg border transition-all ${
                         severity === i
                           ? i === 0 ? 'bg-green-100 border-green-400 text-green-700 font-medium'
                           : i === 1 ? 'bg-amber-100 border-amber-400 text-amber-700 font-medium'
@@ -781,10 +796,7 @@ function DiagnosisPage() {
                     </button>
                   ))}
                 </div>
-              </div>
-
-              {/* 风险因素 + 鉴别诊断按钮 */}
-              <div className="flex items-center gap-2">
+                <div className="w-px h-3.5 bg-slate-200 flex-shrink-0" />
                 <button
                   type="button"
                   onClick={() => setShowRiskPanel(v => !v)}
@@ -801,14 +813,6 @@ function DiagnosisPage() {
                       {Object.values(riskFactors).filter(Boolean).length}
                     </span>
                   )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDifferential(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-500 hover:border-primary-400 hover:text-primary-600 transition-all"
-                >
-                  <GitCompare className="w-3.5 h-3.5" />
-                  感冒 vs 甲流
                 </button>
               </div>
 
@@ -845,7 +849,7 @@ function DiagnosisPage() {
             </div>
 
             {/* 输入区域 */}
-            <form onSubmit={handleSubmit} className="pt-4 border-t border-slate-200">
+            <form onSubmit={handleSubmit} className="py-3 border-t border-slate-200">
               <div className="relative flex space-x-3">
                 <div className="flex-1 relative">
                   <input
@@ -925,6 +929,34 @@ function DiagnosisPage() {
                 </p>
               )}
             </form>
+
+            {/* 快速模板 + 快速添加症状 各占一行 */}
+            <div className="py-3 border-t border-slate-200 space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-400 flex-shrink-0">模板：</span>
+                {SYMPTOM_TEMPLATES.map(t => (
+                  <button
+                    key={t.label}
+                    onClick={() => setInput(t.text)}
+                    className="px-2 py-0.5 text-xs rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 hover:bg-indigo-100 transition-colors"
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-slate-400 flex-shrink-0">症状：</span>
+                {quickSymptoms.map(symptom => (
+                  <button
+                    key={symptom}
+                    onClick={() => setInput(prev => prev ? `${prev}，${symptom}` : symptom)}
+                    className="symptom-tag symptom-tag-inactive"
+                  >
+                    {symptom}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           </div>
 

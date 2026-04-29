@@ -161,7 +161,7 @@ body {
 
 /* 症状标签 */
 .symptom-tag {
-  @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
          transition-all duration-200 cursor-pointer;
 }
 

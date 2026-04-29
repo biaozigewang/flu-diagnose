@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   MessageSquare,
@@ -90,10 +90,16 @@ const DEMO_STEPS = [
 ]
 
 function TypingDemo() {
+  const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [displayed, setDisplayed] = useState('')
   const [charIdx, setCharIdx] = useState(0)
   const [done, setDone] = useState(false)
+  const [userInput, setUserInput] = useState('')
+
+  const handleSubmit = () => {
+    if (userInput.trim()) navigate('/diagnosis', { state: { initialInput: userInput.trim() } })
+  }
 
   useEffect(() => {
     if (done) {
@@ -140,13 +146,23 @@ function TypingDemo() {
           </div>
         )}
       </div>
-      {/* 输入框模拟 */}
+      {/* 输入框 */}
       <div className="px-5 pb-5">
-        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
-          <span className="text-xs text-slate-400 flex-1">描述您的症状...</span>
-          <div className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center">
+        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200 focus-within:border-primary-400 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+          <input
+            type="text"
+            value={userInput}
+            onChange={e => setUserInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            placeholder="描述您的症状，按 Enter 开始诊断..."
+            className="text-xs text-slate-700 flex-1 bg-transparent outline-none placeholder:text-slate-400"
+          />
+          <button
+            onClick={handleSubmit}
+            className="w-6 h-6 rounded-lg bg-primary-500 flex items-center justify-center hover:bg-primary-600 transition-colors"
+          >
             <ArrowRight className="w-3 h-3 text-white" />
-          </div>
+          </button>
         </div>
       </div>
     </div>
