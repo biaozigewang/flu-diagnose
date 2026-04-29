@@ -20,7 +20,7 @@ function Header() {
   }
 
   return (
-    <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+    <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -30,7 +30,7 @@ function Header() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-slate-800">流感哨兵</h1>
-              <p className="text-xs text-slate-500">甲流智能自检系统</p>
+              <p className="text-xs text-slate-500">甲流智能自检</p>
             </div>
           </Link>
 

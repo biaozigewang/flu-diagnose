@@ -77,19 +77,29 @@ function SymptomsResultPanel({ currentSymptoms, diagnosisResult, symptomNameMap 
       </div>
 
       {/* 症状 Tab */}
-      {activeTab === 'symptoms' && (
-        Object.keys(currentSymptoms).length > 0 ? (
-          <div className="flex-1 overflow-y-auto space-y-1">
-            {Object.entries(currentSymptoms)
-              .filter(([key]) => !key.startsWith('_') && !(key in { contact_history:1, no_vaccination:1, chronic_disease:1, age_elderly:1, age_child:1 }))
-              .map(([key, value]) => (
-              <div key={key} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                <span className="text-slate-600 text-sm">{symptomNameMap[key] || key}</span>
-                <span className={`text-sm font-medium ${value ? 'text-red-500' : 'text-green-500'}`}>
-                  {typeof value === 'number' ? `${value}°C` : value ? '有' : '无'}
-                </span>
-              </div>
-            ))}
+      {activeTab === 'symptoms' && (() => {
+        const presentSymptoms = Object.entries(currentSymptoms)
+          .filter(([key, value]) => {
+            if (key.startsWith('_')) return false
+            if (key in { contact_history:1, no_vaccination:1, chronic_disease:1, age_elderly:1, age_child:1 }) return false
+            const present = typeof value === 'object' ? value?.present : !!value
+            return present !== false && value !== null && value !== undefined && value !== false
+          })
+        return presentSymptoms.length > 0 ? (
+          <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+            {presentSymptoms.map(([key, value]) => {
+              const temp = typeof value === 'object' ? value?.value : typeof value === 'number' ? value : null
+              const label = symptomNameMap[key] || key
+              return (
+                <div key={key} className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-red-50 border border-red-100">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                  <span className="text-sm text-slate-700 font-medium">{label}</span>
+                  {temp && (
+                    <span className="ml-auto text-sm text-red-500 font-semibold">{temp}°C</span>
+                  )}
+                </div>
+              )
+            })}
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
@@ -98,7 +108,7 @@ function SymptomsResultPanel({ currentSymptoms, diagnosisResult, symptomNameMap 
             <p className="text-slate-300 text-xs mt-1">在左侧描述症状后自动显示</p>
           </div>
         )
-      )}
+      })()}
 
       {/* 结果 Tab */}
       {activeTab === 'result' && (
@@ -566,7 +576,7 @@ function DiagnosisPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
       {/* 模式切换 */}
       <div className="mb-6 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-1.5 shadow-lg inline-flex">
@@ -604,9 +614,9 @@ function DiagnosisPage() {
           />
         </div>
       ) : (
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-6">
         {/* 上方三列：咽喉图像 + 聊天区 + 已识别症状 */}
-        <div className="grid lg:grid-cols-4 gap-6 items-start">
+        <div className="grid lg:grid-cols-4 gap-3 sm:gap-6 items-start">
           {/* 咽喉图像分析 - 占 1/4 */}
           <div className="lg:col-span-1 flex flex-col gap-4" style={{ height: 600 }}>
             <ThroatImageAnalysis
@@ -734,24 +744,17 @@ function DiagnosisPage() {
             </div>
 
             {/* 消息列表 */}
-            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto py-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto py-2 space-y-2">
               <AnimatePresence>
                 {messages.map((message, index) => (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className={`flex items-start space-x-2 w-[85%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        message.role === 'user'
-                          ? 'bg-primary-100 text-primary-600'
-                          : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                      </div>
+                    <div className={`max-w-[85%] ${message.role === 'user' ? '' : 'w-full'}`}>
                       <div className={`message-bubble ${message.role === 'user' ? 'message-user' : 'message-assistant'}`}>
                         {/* 思考过程（可折叠）- 仅诊断结果消息 */}
                         {message.thinking && message.thinking.length > 0 && (
@@ -805,17 +808,15 @@ function DiagnosisPage() {
                     </div>
                   </motion.div>
                 ))}
+
               </AnimatePresence>
 
               {isLoading && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex items-center space-x-2 text-slate-500"
+                  className="flex justify-start"
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                    <Bot className="w-4 h-4" />
-                  </div>
                   <div className="message-bubble message-assistant">
                     <div className="flex items-center space-x-2">
                       <Loader2 className="w-4 h-4 animate-spin text-primary-500" />

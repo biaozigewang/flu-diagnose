@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 移动端安全区支持 */
+:root {
+  --sat: env(safe-area-inset-top);
+  --sar: env(safe-area-inset-right);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+}
+
 :root {
   --color-primary: #0284c7;
   --color-primary-light: #38bdf8;

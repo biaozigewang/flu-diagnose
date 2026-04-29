@@ -24,5 +24,5 @@ frontend/dist/
 Thumbs.db
 
 # Capacitor Android 项目（本地生成，不上传）
-frontend/android/
+
 frontend/.env.mobile

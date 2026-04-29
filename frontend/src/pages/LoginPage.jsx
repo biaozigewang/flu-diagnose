@@ -61,7 +61,7 @@ function LoginPage() {
             <Activity className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-800">流感哨兵</h1>
-          <p className="text-slate-500 text-sm mt-1">甲流智能自检系统</p>
+          <p className="text-slate-500 text-sm mt-1">甲流智能自检</p>
         </div>
 
         {/* 卡片 */}
